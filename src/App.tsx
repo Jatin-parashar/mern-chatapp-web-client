@@ -1,8 +1,14 @@
 import './App.css'
+import { SocketContextProvider } from './socket/SocketContext'
 
 function App() {
   return (
-    <div>mern-chatapp-web-client</div>
+    <SocketContextProvider>
+      <div className="app">
+        <h1>Chat App</h1>
+        <p>Ready for UI development!</p>
+      </div>
+    </SocketContextProvider>
   )
 }
 
