@@ -6,8 +6,16 @@ export const callApi = createApi({
   reducerPath: "callApi",
   baseQuery: baseQuery("call"),
   endpoints: (builder) => ({
-    getCallHistory: builder.query<CallHistoryResponse, number | void>({
-      query: (limit = 50) => `/history?limit=${limit}`,
+    getCallHistory: builder.query<CallHistoryResponse, { 
+      limit?: number; 
+      skip?: number 
+    } | void>({
+      query: (params) => {
+        const searchParams = new URLSearchParams();
+        if (params?.limit) searchParams.append('limit', params.limit.toString());
+        if (params?.skip) searchParams.append('skip', params.skip.toString());
+        return `/history${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+      },
     }),
     getCallById: builder.query<CallDetailsResponse, string>({
       query: (callId) => `/${callId}`,

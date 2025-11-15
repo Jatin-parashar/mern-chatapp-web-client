@@ -16,6 +16,7 @@ export interface LoginRequest {
 export interface RegisterRequest {
   name: string;
   email: string;
+  username: string;
   password: string;
   status?: string;
   profilePic?: File;
@@ -38,9 +39,13 @@ export interface UpdateUserRequest {
   status?: string;
 }
 
+// Updated to match new pagination format
 export interface UserData {
   user?: User;
-  users?: User[];
+  data?: User[];  // Changed from users to data
+  count?: number;
+  total?: number;
+  hasMore?: boolean;
   updatedUser?: User;
 }
 
@@ -52,9 +57,13 @@ export interface CreateConversationRequest {
   name?: string;
 }
 
+// Updated to match new pagination format
 export interface ConversationData {
   conversation?: Conversation;
-  conversations?: Conversation[];
+  data?: Conversation[];  // Changed from conversations to data
+  count?: number;
+  total?: number;
+  hasMore?: boolean;
 }
 
 export interface ConversationResponse extends ApiResponse<ConversationData> {}
@@ -68,11 +77,13 @@ export interface SendMessageRequest {
   replyTo?: string;
 }
 
+// Updated to match new pagination format
 export interface MessageData {
   message?: Message;
-  messages?: Message[];
+  data?: Message[];  // Changed from messages to data
   count?: number;
   total?: number;
+  hasMore?: boolean;
 }
 
 export interface MessageResponse extends ApiResponse<MessageData> {}
@@ -80,8 +91,10 @@ export interface MessageResponse extends ApiResponse<MessageData> {}
 // CALL API (matches call.controller.ts)
 export interface CallData {
   call?: Call;
-  calls?: Call[];
+  data?: Call[];  // Changed from calls to data
   count?: number;
+  total?: number;
+  hasMore?: boolean;
 }
 
 export interface CallHistoryResponse extends ApiResponse<CallData> {}

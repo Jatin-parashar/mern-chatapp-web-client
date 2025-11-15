@@ -9,14 +9,28 @@ export const userApi = createApi({
     getCurrentUser: builder.query<UserResponse, void>({
       query: () => "/me",
     }),
-    getAllUsers: builder.query<UserResponse, void>({
-      query: () => "/all",
+    getAllUsers: builder.query<UserResponse, { limit?: number; skip?: number } | void>({
+      query: (params) => {
+        const searchParams = new URLSearchParams();
+        if (params?.limit) searchParams.append('limit', params.limit.toString());
+        if (params?.skip) searchParams.append('skip', params.skip.toString());
+        return `/all${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+      },
     }),
     getUserById: builder.query<UserResponse, string>({
       query: (id) => `/${id}`,
     }),
-    searchUsersByKeyword: builder.query<UserResponse, string>({
-      query: (keyword) => `/search?keyword=${keyword}`,
+    searchUsersByKeyword: builder.query<UserResponse, { 
+      keyword: string; 
+      limit?: number; 
+      skip?: number 
+    }>({
+      query: ({ keyword, limit, skip }) => {
+        const searchParams = new URLSearchParams({ keyword });
+        if (limit) searchParams.append('limit', limit.toString());
+        if (skip) searchParams.append('skip', skip.toString());
+        return `/search?${searchParams.toString()}`;
+      },
     }),
     updateUserInfo: builder.mutation<UserResponse, UpdateUserRequest>({
       query: (userInfo) => ({
@@ -38,4 +52,5 @@ export const {
   useLazyGetUserByIdQuery,
   useLazySearchUsersByKeywordQuery,
   useUpdateUserInfoMutation,
+
 } = userApi;

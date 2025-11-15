@@ -21,8 +21,16 @@ export const chatApi = createApi({
         body: conversationInfo,
       }),
     }),
-    getUserConversations: builder.query<ConversationResponse, void>({
-      query: () => "conversation",
+    getUserConversations: builder.query<ConversationResponse, { 
+      limit?: number; 
+      skip?: number 
+    } | void>({
+      query: (params) => {
+        const searchParams = new URLSearchParams();
+        if (params?.limit) searchParams.append('limit', params.limit.toString());
+        if (params?.skip) searchParams.append('skip', params.skip.toString());
+        return `conversation${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+      },
     }),
     getConversationById: builder.query<ConversationResponse, string>({
       query: (id) => `conversation/${id}`,
