@@ -4,6 +4,7 @@ import { deleteUser } from "../features/user/userSlice";
 import type { RootState } from "./store";
 import { getServerURL } from "../utils/constants";
 import { logout, setCredentials } from "../features/auth/authSlice";
+import { authToasts } from "../utils/toast";
 
 export const baseQuery = (path = "") => {
   const rawBaseQuery = fetchBaseQuery({
@@ -22,6 +23,18 @@ export const baseQuery = (path = "") => {
     let result = await rawBaseQuery(args, api, extraOptions);
 
     if (result?.error?.status === 401) {
+      const refreshToken = localStorage.getItem('refreshToken');
+      
+      if (!refreshToken) {
+        // No refresh token available
+        api.dispatch(logout());
+        api.dispatch(releaseChatInfo());
+        api.dispatch(deleteUser());
+        localStorage.removeItem('refreshToken');
+        authToasts.sessionExpired();
+        return result;
+      }
+
       const refreshResult = await fetchBaseQuery({
         baseUrl: getServerURL("auth"),
         credentials: "include",
@@ -29,7 +42,7 @@ export const baseQuery = (path = "") => {
         { 
           url: "/refreshToken", 
           method: "POST",
-          body: { refreshToken: localStorage.getItem('refreshToken') }
+          body: { refreshToken }
         },
         api,
         extraOptions
@@ -38,17 +51,24 @@ export const baseQuery = (path = "") => {
       if (refreshResult?.data) {
         const response = refreshResult.data as any;
         const data = response.data;
+        
+        // Update access token
         api.dispatch(
           setCredentials({
             email: data.user.email,
             accessToken: data.accessToken,
           })
         );
+        
+        // Retry original request
         result = await rawBaseQuery(args, api, extraOptions);
       } else {
+        // Refresh token expired or invalid
         api.dispatch(logout());
         api.dispatch(releaseChatInfo());
         api.dispatch(deleteUser());
+        localStorage.removeItem('refreshToken');
+        authToasts.sessionExpired();
       }
     }
 

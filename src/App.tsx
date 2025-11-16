@@ -12,6 +12,7 @@ import {
 } from "./pages";
 import { ThemeProvider } from "./components/theme/theme-provider";
 import { Layout } from "./components/theme/Layout";
+import { Toaster } from "./components/ui/sonner";
 
 
 function App() {
@@ -52,6 +53,7 @@ function App() {
     <ThemeProvider>
       <AuthBootstrap />
       <RouterProvider router={router} />
+      <Toaster position="bottom-left" />
     </ThemeProvider>
   );
 }

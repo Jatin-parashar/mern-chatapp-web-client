@@ -1,6 +1,6 @@
-import { Link } from "react-router";
-import { Home, ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles } from "lucide-react";
 import { Button } from "../components/ui/button";
+import { appTitle } from "@/utils/constants";
 
 export default function NotFoundPage() {
   return (
@@ -18,7 +18,7 @@ export default function NotFoundPage() {
                 <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
               <span className="text-xl sm:text-2xl font-bold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                ChatApp
+                {appTitle}
               </span>
             </div>
           </div>
@@ -36,23 +36,10 @@ export default function NotFoundPage() {
             </p>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-2 sm:pt-4 px-4">
+          <div className="flex justify-center pt-2 sm:pt-4 px-4">
             <Button
-              asChild
               size="default"
               className="w-full sm:w-auto bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white h-10 sm:h-11 text-sm sm:text-base"
-            >
-              <Link to="/">
-                <Home className="mr-2 h-4 w-4" />
-                Back to Home
-              </Link>
-            </Button>
-            
-            <Button
-              size="default"
-              variant="outline"
-              className="w-full sm:w-auto h-10 sm:h-11 text-sm sm:text-base"
               onClick={() => window.history.back()}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />

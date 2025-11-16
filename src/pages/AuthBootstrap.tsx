@@ -5,27 +5,30 @@ import { releaseChatInfo } from "../features/chat/chatSlice";
 import { deleteUser } from "../features/user/userSlice";
 import type { RootState } from "../app/store";
 import decodeJwt from "../utils/jwtDecoder";
+import { authToasts } from "../utils/toast";
 
 export default function AuthBootstrap() {
   const dispatch = useDispatch();
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
 
   useEffect(() => {
-    // Check if current token is expired and clear it
     if (accessToken) {
       try {
         const decoded = decodeJwt(accessToken);
         if (decoded && decoded.exp * 1000 < Date.now()) {
-          // Token is expired, clear it
+          // Token is expired
           dispatch(logout());
           dispatch(releaseChatInfo());
           dispatch(deleteUser());
+          localStorage.removeItem('refreshToken');
+          authToasts.sessionExpired();
         }
       } catch (e) {
-        // Invalid token, clear it
+        // Invalid token
         dispatch(logout());
         dispatch(releaseChatInfo());
         dispatch(deleteUser());
+        localStorage.removeItem('refreshToken');
       }
     }
   }, [accessToken, dispatch]);

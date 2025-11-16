@@ -4,6 +4,8 @@ export const getServerURL = (path:string) => {
 
 export const socketURL = import.meta.env.VITE_SERVER_URL;
 
+export const appTitle = "Elevate Messaging"
+
 // TBD
 // export const API_ENDPOINTS = {
 //   AUTH: {

@@ -7,6 +7,16 @@ import { Button } from "../components/ui/button";
 import { LogOut, MessageSquare } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import type { RootState } from "../app/store";
+import { authToasts } from "../utils/toast";
+
+const getInitials = (name: string): string => {
+  return name
+    .split(' ')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
 
 export default function ChatPage() {
   const dispatch = useDispatch();
@@ -16,6 +26,7 @@ export default function ChatPage() {
   const handleLogout = async () => {
     try {
       await logoutMutation().unwrap();
+      authToasts.logoutSuccess();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -24,15 +35,6 @@ export default function ChatPage() {
       dispatch(deleteUser());
       localStorage.removeItem('refreshToken');
     }
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
   };
 
   return (
@@ -64,7 +66,7 @@ export default function ChatPage() {
               size="sm"
               onClick={handleLogout}
               disabled={isLoading}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
               title="Logout"
             >
               <LogOut className="h-4 w-4" />
