@@ -8,6 +8,8 @@ import { LogOut, MessageSquare } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import type { RootState } from "../app/store";
 import { authToasts } from "../utils/toast";
+import { Helmet } from "react-helmet";
+import { appTitle } from "../utils/constants";
 
 const getInitials = (name: string): string => {
   return name
@@ -38,7 +40,16 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="h-screen w-screen flex bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+    <>
+      <Helmet>
+        <title>{appTitle}</title>
+        <meta name="description" content="Real-time messaging, video calls, and file sharing" />
+        <link rel="canonical" href={window.location.origin} />
+        <meta property="og:title" content={appTitle} />
+        <meta property="og:description" content="Real-time messaging, video calls, and file sharing" />
+        <meta property="og:url" content={window.location.origin} />
+      </Helmet>
+      <div className="h-screen w-screen flex bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       {/* Sidebar */}
       <aside className="w-80 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col">
         {/* Header */}
@@ -106,5 +117,6 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

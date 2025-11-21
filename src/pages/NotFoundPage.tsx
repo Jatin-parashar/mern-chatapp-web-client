@@ -1,10 +1,17 @@
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { appTitle } from "@/utils/constants";
+import { Helmet } from "react-helmet";
 
 export default function NotFoundPage() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-linear-to-br from-violet-50 via-purple-50 to-pink-50 dark:from-slate-950 dark:via-violet-950 dark:to-slate-950 overflow-hidden relative p-4 sm:p-6">
+    <>
+      <Helmet>
+        <title>404 - Page Not Found | {appTitle}</title>
+        <meta name="description" content="The page you're looking for doesn't exist" />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="min-h-screen w-full flex items-center justify-center bg-linear-to-br from-violet-50 via-purple-50 to-pink-50 dark:from-slate-950 dark:via-violet-950 dark:to-slate-950 overflow-hidden relative p-4 sm:p-6">
       {/* Animated background elements */}
       <div className="absolute top-10 sm:top-20 left-10 sm:left-20 w-48 sm:w-72 h-48 sm:h-72 bg-purple-300/30 dark:bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-10 sm:bottom-20 right-10 sm:right-20 w-48 sm:w-72 h-48 sm:h-72 bg-indigo-300/30 dark:bg-indigo-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '700ms' }} />
@@ -49,5 +56,6 @@ export default function NotFoundPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

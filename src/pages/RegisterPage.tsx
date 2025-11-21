@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { authToasts, showToast } from "../utils/toast";
 import type { AuthData } from "@/types";
 import { appTitle } from "@/utils/constants";
+import { Helmet } from "react-helmet";
 
 export default function RegisterPage() {
   const dispatch = useDispatch();
@@ -114,7 +115,16 @@ export default function RegisterPage() {
   const isProcessing = isLoading;
 
   return (
-    <div className="h-screen w-full flex overflow-hidden bg-linear-to-br from-purple-50 via-white to-pink-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <>
+      <Helmet>
+        <title>Register - {appTitle}</title>
+        <meta name="description" content="Create your account and join thousands of users connecting worldwide" />
+        <link rel="canonical" href={`${window.location.origin}/register`} />
+        <meta property="og:title" content={`Register - ${appTitle}`} />
+        <meta property="og:description" content="Create your account and join thousands of users connecting worldwide" />
+        <meta property="og:url" content={`${window.location.origin}/register`} />
+      </Helmet>
+      <div className="h-screen w-full flex overflow-hidden bg-linear-to-br from-purple-50 via-white to-pink-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <div className="hidden lg:flex lg:w-1/2 bg-linear-to-br from-purple-600 via-pink-600 to-indigo-600 relative">
         <div className="absolute inset-0 bg-black/10" />
         <div className="absolute top-20 right-20 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse" />
@@ -335,5 +345,6 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -12,6 +12,7 @@ import { Loader2, LogIn, Mail, Lock, Sparkles } from "lucide-react";
 import { authToasts, showToast } from "../utils/toast";
 import type { AuthData } from "@/types";
 import { appTitle } from "@/utils/constants";
+import { Helmet } from "react-helmet";
 
 export default function LoginPage() {
   const dispatch = useDispatch();
@@ -48,7 +49,16 @@ export default function LoginPage() {
   const isProcessing = isLoading;
 
   return (
-    <div className="h-screen w-full flex overflow-hidden bg-linear-to-br from-indigo-50 via-white to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <>
+      <Helmet>
+        <title>Login - {appTitle}</title>
+        <meta name="description" content="Sign in to your account and start chatting with friends" />
+        <link rel="canonical" href={`${window.location.origin}/login`} />
+        <meta property="og:title" content={`Login - ${appTitle}`} />
+        <meta property="og:description" content="Sign in to your account and start chatting with friends" />
+        <meta property="og:url" content={`${window.location.origin}/login`} />
+      </Helmet>
+      <div className="h-screen w-full flex overflow-hidden bg-linear-to-br from-indigo-50 via-white to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <div className="hidden lg:flex lg:w-1/2 bg-linear-to-br from-indigo-600 via-purple-600 to-pink-600 relative">
         <div className="absolute inset-0 bg-black/10" />
         <div className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse" />
@@ -166,5 +176,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
