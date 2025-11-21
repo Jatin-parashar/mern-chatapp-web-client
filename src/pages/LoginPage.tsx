@@ -1,7 +1,7 @@
 import { useLoginMutation } from "../features/auth/authApi";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "../features/auth/authSlice";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useLazyGetUserByIdQuery } from "../features/user/userApi";
 import { updateUser } from "../features/user/userSlice";
@@ -9,16 +9,15 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Loader2, LogIn, Mail, Lock, Sparkles } from "lucide-react";
-import { showToast } from "../utils/toast";
+import { authToasts, showToast } from "../utils/toast";
 import type { AuthData } from "@/types";
 import { appTitle } from "@/utils/constants";
 
 export default function LoginPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [login, { isLoading, isSuccess }] = useLoginMutation();
-  const [fetchUserById, { data: userInfoResult, isSuccess: userFetched }] =
-    useLazyGetUserByIdQuery();
+  const [login, { isLoading }] = useLoginMutation();
+  const [fetchUserById] = useLazyGetUserByIdQuery();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,21 +32,20 @@ export default function LoginPage() {
       dispatch(setCredentials({ email: user.email, accessToken }));
       if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
 
-      await fetchUserById(user._id);
+      const userResult = await fetchUserById(user._id).unwrap();
+      if (userResult.data?.user) {
+        dispatch(updateUser(userResult.data.user));
+        authToasts.loginSuccess(userResult.data.user.name);
+        navigate("/");
+      }
     } catch (error: any) {
       showToast.error(error?.data?.message || "Login failed");
     }
   };
 
-  useEffect(() => {
-    if (userFetched && userInfoResult?.data?.user) {
-      dispatch(updateUser(userInfoResult.data.user));
-      showToast.success(`Welcome back, ${userInfoResult.data.user.name}!`);
-      navigate("/");
-    }
-  }, [userFetched, userInfoResult, dispatch, navigate]);
 
-  const isProcessing = isLoading || (isSuccess && !userFetched);
+
+  const isProcessing = isLoading;
 
   return (
     <div className="h-screen w-full flex overflow-hidden bg-linear-to-br from-indigo-50 via-white to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">

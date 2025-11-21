@@ -12,11 +12,12 @@ export default function AuthBootstrap() {
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
 
   useEffect(() => {
-    if (accessToken) {
+    if (!accessToken) return;
+
+    const checkToken = () => {
       try {
         const decoded = decodeJwt(accessToken);
-        if (decoded && decoded.exp * 1000 < Date.now()) {
-          // Token is expired
+        if (!decoded || decoded.exp * 1000 < Date.now()) {
           dispatch(logout());
           dispatch(releaseChatInfo());
           dispatch(deleteUser());
@@ -24,13 +25,17 @@ export default function AuthBootstrap() {
           authToasts.sessionExpired();
         }
       } catch (e) {
-        // Invalid token
         dispatch(logout());
         dispatch(releaseChatInfo());
         dispatch(deleteUser());
         localStorage.removeItem('refreshToken');
       }
-    }
+    };
+
+    checkToken();
+    const interval = setInterval(checkToken, 60000);
+
+    return () => clearInterval(interval);
   }, [accessToken, dispatch]);
 
   return null;

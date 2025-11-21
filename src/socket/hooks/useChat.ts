@@ -58,7 +58,7 @@ export const useChat = () => {
         // Auto-mark as seen if in active conversation and not sender
         if (message.sender._id !== userId) {
           try {
-            await markMessageSeen(message._id);
+            await markMessageSeen(message._id).unwrap();
             socket.emit(SOCKET_MESSAGE_SEEN, {
               conversationId: activeConv._id,
               messageId: message._id,
@@ -108,33 +108,33 @@ export const useChat = () => {
   );
 
   const emitNewMessage = useCallback(
-    (message: Message, userId: string) => {
+    (message: Message) => {
       if (!socket) return;
-      socket.emit(SOCKET_NEW_MESSAGE, { message, userId });
+      socket.emit(SOCKET_NEW_MESSAGE, { message });
     },
     [socket]
   );
 
   const emitNewConversation = useCallback(
-    (conversationId: string, userId: string) => {
+    (conversationId: string) => {
       if (!socket) return;
-      socket.emit(SOCKET_NEW_CONVERSATION, { conversationId, userId });
+      socket.emit(SOCKET_NEW_CONVERSATION, { conversationId });
     },
     [socket]
   );
 
   const emitMessageSeen = useCallback(
-    (conversationId: string, messageId: string, userId: string) => {
+    (conversationId: string, messageId: string) => {
       if (!socket) return;
-      socket.emit(SOCKET_MESSAGE_SEEN, { conversationId, messageId, userId });
+      socket.emit(SOCKET_MESSAGE_SEEN, { conversationId, messageId });
     },
     [socket]
   );
 
   const emitConversationMessagesSeen = useCallback(
-    (conversationId: string, userId: string) => {
+    (conversationId: string) => {
       if (!socket) return;
-      socket.emit(SOCKET_CONVERSATION_MESSAGES_SEEN, { conversationId, userId });
+      socket.emit(SOCKET_CONVERSATION_MESSAGES_SEEN, { conversationId });
     },
     [socket]
   );

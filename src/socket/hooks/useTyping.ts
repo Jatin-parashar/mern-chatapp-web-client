@@ -9,7 +9,9 @@ import type { TypingEventData, StopTypingEventData } from "../../types/socket";
 export const useTyping = () => {
   const { socket } = useSocketInstance();
   const dispatch = useDispatch();
-  const typingStatus = useSelector((state: RootState) => state.chat.typingStatus);
+  const typingStatus = useSelector(
+    (state: RootState) => state.chat.typingStatus
+  );
 
   useEffect(() => {
     if (!socket) return;
@@ -18,7 +20,10 @@ export const useTyping = () => {
       dispatch(setTypingStatus({ conversationId, userId, isTyping: true }));
     };
 
-    const handleStopTyping = ({ userId, conversationId }: StopTypingEventData) => {
+    const handleStopTyping = ({
+      userId,
+      conversationId,
+    }: StopTypingEventData) => {
       dispatch(setTypingStatus({ conversationId, userId, isTyping: false }));
     };
 
@@ -32,17 +37,17 @@ export const useTyping = () => {
   }, [socket, dispatch]);
 
   const emitTyping = useCallback(
-    (conversationId: string, userId: string) => {
+    (conversationId: string) => {
       if (!socket) return;
-      socket.emit(SOCKET_TYPING, { conversationId, userId });
+      socket.emit(SOCKET_TYPING, { conversationId });
     },
     [socket]
   );
 
   const emitStopTyping = useCallback(
-    (conversationId: string, userId: string) => {
+    (conversationId: string) => {
       if (!socket) return;
-      socket.emit(SOCKET_STOP_TYPING, { conversationId, userId });
+      socket.emit(SOCKET_STOP_TYPING, { conversationId });
     },
     [socket]
   );

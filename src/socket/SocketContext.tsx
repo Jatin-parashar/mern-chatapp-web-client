@@ -31,16 +31,19 @@ export const SocketContextProvider = ({ children }: SocketContextProviderProps) 
     autoConnect: false
   }), []);
 
-  // Update auth token when it changes
   useEffect(() => {
-    if (accessToken) {
-      socket.auth = { token: accessToken };
+    if (!currentUserId || !accessToken) {
+      if (socket.connected) {
+        socket.disconnect();
+      }
+      return;
     }
-  }, [accessToken, socket]);
 
-  useEffect(() => {
-    if (!currentUserId || !accessToken) return;
-
+    socket.auth = { token: accessToken };
+    
+    if (socket.connected) {
+      socket.disconnect();
+    }
     socket.connect();
 
     const onConnect = () => {
@@ -48,7 +51,12 @@ export const SocketContextProvider = ({ children }: SocketContextProviderProps) 
       socket.emit(SOCKET_SETUP, currentUserId);
     };
 
+    const onConnectError = (error: Error) => {
+      console.error('Socket authentication error:', error.message);
+    };
+
     socket.on(SOCKET_CONNECT, onConnect);
+    socket.on('connect_error', onConnectError);
 
     return () => {
       if (socket.connected) {
@@ -56,8 +64,9 @@ export const SocketContextProvider = ({ children }: SocketContextProviderProps) 
         socket.disconnect();
       }
       socket.off(SOCKET_CONNECT, onConnect);
+      socket.off('connect_error', onConnectError);
     };
-  }, [currentUserId, socket]);
+  }, [currentUserId, accessToken, socket]);
 
   return (
     <SocketContext.Provider value={{ socket }}>

@@ -10,15 +10,15 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Loader2, UserPlus, Mail, Lock, User, MessageSquare, Camera, Sparkles, Check, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
-import { showToast } from "../utils/toast";
+import { authToasts, showToast } from "../utils/toast";
 import type { AuthData } from "@/types";
 import { appTitle } from "@/utils/constants";
 
 export default function RegisterPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [register, { isLoading, isSuccess }] = useRegisterMutation();
-  const [fetchUserById, { data: userInfoResult, isSuccess: userFetched }] = useLazyGetUserByIdQuery();
+  const [register, { isLoading }] = useRegisterMutation();
+  const [fetchUserById] = useLazyGetUserByIdQuery();
   const [checkUsername, { data: usernameCheck }] = useLazyCheckUsernameAvailabilityQuery();
 
   const [name, setName] = useState("");
@@ -86,7 +86,12 @@ export default function RegisterPage() {
       dispatch(setCredentials({ email: user.email, accessToken }));
       if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
       
-      await fetchUserById(user._id);
+      const userResult = await fetchUserById(user._id).unwrap();
+      if (userResult.data?.user) {
+        dispatch(updateUser(userResult.data.user));
+        authToasts.registerSuccess(userResult.data.user.name);
+        navigate("/");
+      }
     } catch (error: any) {
       showToast.error(error?.data?.message || "Registration failed");
     }
@@ -98,13 +103,7 @@ export default function RegisterPage() {
     }
   }, [usernameCheck]);
 
-  useEffect(() => {
-    if (userFetched && userInfoResult?.data?.user) {
-      dispatch(updateUser(userInfoResult.data.user));
-      showToast.success(`Welcome, ${userInfoResult.data.user.name}!`);
-      navigate("/");
-    }
-  }, [userFetched, userInfoResult, dispatch, navigate]);
+
 
   useEffect(() => {
     return () => {
@@ -112,7 +111,7 @@ export default function RegisterPage() {
     };
   }, []);
 
-  const isProcessing = isLoading || (isSuccess && !userFetched);
+  const isProcessing = isLoading;
 
   return (
     <div className="h-screen w-full flex overflow-hidden bg-linear-to-br from-purple-50 via-white to-pink-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
