@@ -45,7 +45,7 @@ export default function Sidebar({ profileUser, onCloseProfile }: SidebarProps) {
   };
 
   const { conversations, isLoading: loadingConversations, refetch } = useConversations();
-  const { query, setQuery, clearSearch, users, isSearching, isLoading: searchingUsers } = useUserSearch();
+  const { query, setQuery, clearSearch, users, isLoading: searchingUsers } = useUserSearch();
   const [createConversation] = useCreateConversationMutation();
 
   const handleConversationClick = (conversationId: string) => {
