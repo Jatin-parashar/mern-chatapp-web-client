@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
 import { io, Socket } from "socket.io-client";
 import { useSelector } from "react-redux";
 import type { RootState } from "../app/store";
@@ -27,9 +27,13 @@ export const SocketContextProvider = ({ children }: SocketContextProviderProps) 
   const currentUserId = useSelector((state: RootState) => state.user._id);
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
   
-  const socket = useMemo(() => io(socketURL, { 
-    autoConnect: false
-  }), []);
+  const socketRef = useRef<Socket | null>(null);
+  
+  if (!socketRef.current) {
+    socketRef.current = io(socketURL, { autoConnect: false });
+  }
+  
+  const socket = socketRef.current;
 
   useEffect(() => {
     if (!currentUserId || !accessToken) {
@@ -47,26 +51,39 @@ export const SocketContextProvider = ({ children }: SocketContextProviderProps) 
     socket.connect();
 
     const onConnect = () => {
-      console.log(`Socket connected: ${socket.id}`);
-      socket.emit(SOCKET_SETUP, currentUserId);
+      if (import.meta.env.DEV) {
+        console.log(`Socket connected: ${socket.id}`);
+      }
+      socket.emit(SOCKET_SETUP);
     };
 
     const onConnectError = (error: Error) => {
-      console.error('Socket authentication error:', error.message);
+      if (import.meta.env.DEV) {
+        console.error('Socket authentication error:', error.message);
+      }
+      if (error.message.includes('Authentication')) {
+        socket.disconnect();
+      }
     };
 
     socket.on(SOCKET_CONNECT, onConnect);
     socket.on('connect_error', onConnectError);
 
     return () => {
-      if (socket.connected) {
-        console.log(`Socket disconnected: ${socket.id}`);
-        socket.disconnect();
-      }
       socket.off(SOCKET_CONNECT, onConnect);
       socket.off('connect_error', onConnectError);
     };
   }, [currentUserId, accessToken, socket]);
+  
+  useEffect(() => {
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.removeAllListeners();
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <SocketContext.Provider value={{ socket }}>

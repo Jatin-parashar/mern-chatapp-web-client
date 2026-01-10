@@ -31,7 +31,7 @@ export default function LoginPage() {
       const { user, accessToken, refreshToken } = result.data as AuthData;
 
       dispatch(setCredentials({ email: user.email, accessToken }));
-      if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
 
       const userResult = await fetchUserById(user._id).unwrap();
       if (userResult.data?.user) {

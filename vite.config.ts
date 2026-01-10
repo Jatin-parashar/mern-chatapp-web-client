@@ -4,7 +4,6 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import path from "path"
 import tailwindcss from "@tailwindcss/vite"
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react({
@@ -14,6 +13,7 @@ export default defineConfig({
     }),
     tailwindcss(),
     nodePolyfills({
+      include: ['buffer', 'process', 'util'],
       globals: {
         Buffer: true,
         global: true,
@@ -30,6 +30,14 @@ export default defineConfig({
         drop_debugger: true,
       },
     },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'emoji-picker': ['emoji-picker-react'],
+          'peer': ['simple-peer'],
+        },
+      },
+    },
   },
 
   define: {
@@ -40,11 +48,12 @@ export default defineConfig({
     alias: {
       buffer: 'buffer',
       process: 'process/browser',
+      util: 'util',
       "@": path.resolve(__dirname, "./src"),
     },
   },
 
   optimizeDeps: {
-    include: ['buffer', 'process'],
+    include: ['buffer', 'process', 'util'],
   },
 });

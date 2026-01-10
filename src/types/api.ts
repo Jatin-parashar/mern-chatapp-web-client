@@ -39,14 +39,15 @@ export interface UpdateUserRequest {
   status?: string;
 }
 
-// Updated to match new pagination format
+// Updated to match server queryBuilder pagination format
 export interface UserData {
   user?: User;
-  data?: User[];  // Changed from users to data
-  count?: number;
-  total?: number;
-  hasMore?: boolean;
+  data?: User[];  // Paginated results
+  count?: number;  // Items in current page
+  total?: number;  // Total items available
+  hasMore?: boolean;  // Whether more pages exist
   updatedUser?: User;
+  available?: boolean;  // For username availability check
 }
 
 export interface UserResponse extends ApiResponse<UserData> {}
@@ -57,13 +58,13 @@ export interface CreateConversationRequest {
   name?: string;
 }
 
-// Updated to match new pagination format
+// Updated to match server queryBuilder pagination format
 export interface ConversationData {
   conversation?: Conversation;
-  data?: Conversation[];  // Changed from conversations to data
-  count?: number;
-  total?: number;
-  hasMore?: boolean;
+  data?: Conversation[];  // Paginated results
+  count?: number;  // Items in current page
+  total?: number;  // Total items available
+  hasMore?: boolean;  // Whether more pages exist
 }
 
 export interface ConversationResponse extends ApiResponse<ConversationData> {}
@@ -77,24 +78,28 @@ export interface SendMessageRequest {
   replyTo?: string;
 }
 
-// Updated to match new pagination format
+// Updated to match server queryBuilder pagination format
 export interface MessageData {
   message?: Message;
-  data?: Message[];  // Changed from messages to data
-  count?: number;
-  total?: number;
-  hasMore?: boolean;
+  conversation?: Conversation;  // For first message response
+  data?: Message[];  // Paginated results
+  messages?: Message[];  // For cursor-based pagination
+  nextCursor?: string | null;  // For cursor-based pagination
+  count?: number;  // Items in current page
+  total?: number;  // Total items available
+  hasMore?: boolean;  // Whether more pages exist
 }
 
 export interface MessageResponse extends ApiResponse<MessageData> {}
 
 // CALL API (matches call.controller.ts)
+// Updated to match server queryBuilder pagination format
 export interface CallData {
   call?: Call;
-  data?: Call[];  // Changed from calls to data
-  count?: number;
-  total?: number;
-  hasMore?: boolean;
+  data?: Call[];  // Paginated results
+  count?: number;  // Items in current page
+  total?: number;  // Total items available
+  hasMore?: boolean;  // Whether more pages exist
 }
 
 export interface CallHistoryResponse extends ApiResponse<CallData> {}

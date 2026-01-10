@@ -1,6 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "../../app/api";
-import type { LoginRequest, RefreshTokenRequest, AuthResponse, ApiResponse } from "../../types/api";
+import type { LoginRequest, AuthResponse, ApiResponse } from "../../types/api";
 
 export const authApi = createApi({
   reducerPath: "authApi",
@@ -20,13 +20,6 @@ export const authApi = createApi({
         body: formData
       }),
     }),
-    refresh: builder.mutation<AuthResponse, RefreshTokenRequest>({
-      query: (data) => ({
-        url: "/refreshToken",
-        method: "POST",
-        body: data,
-      }),
-    }),
     logout: builder.mutation<ApiResponse, void>({
       query: () => ({
         url: "/logout",
@@ -43,7 +36,6 @@ export const authApi = createApi({
 export const {
   useLoginMutation,
   useRegisterMutation,
-  useRefreshMutation,
   useLogoutMutation,
   useCheckUsernameAvailabilityQuery,
   useLazyCheckUsernameAvailabilityQuery,

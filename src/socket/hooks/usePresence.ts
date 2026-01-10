@@ -14,7 +14,6 @@ export const usePresence = () => {
     if (!socket) return;
 
     const handleOnlineUsers = (users: string[]) => {
-      console.log(`Online Users: ${users.length}`);
       dispatch(setOnlineUsers(users));
     };
 

@@ -15,6 +15,7 @@ export interface Message {
   sender: User;
   content?: string;
   messageType: 'text' | 'image' | 'video' | 'audio' | 'document' | 'system';
+  deliveredTo: (string | User)[];
   seenBy: (string | User)[];
   attachments?: MessageAttachment[];
   replyTo?: string;
@@ -25,11 +26,9 @@ export interface Message {
 export interface MessageAttachment {
   url: string;
   publicId: string;
-  fileName: string;
-  fileSize: number;
+  originalName: string;
   mimeType: string;
-  dimensions?: { width: number; height: number };
-  duration?: number;
+  size: number;
 }
 
 export interface Conversation {

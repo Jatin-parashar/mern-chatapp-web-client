@@ -11,14 +11,11 @@ export const chatApi = createApi({
   reducerPath: "chatApi",
   baseQuery: baseQuery(),
   endpoints: (builder) => ({
-    createConversation: builder.mutation<ConversationResponse, { 
-      conversationInfo: CreateConversationRequest; 
-      isGroup?: boolean 
-    }>({
-      query: ({ conversationInfo, isGroup = false }) => ({
+    createConversation: builder.mutation<ConversationResponse, CreateConversationRequest & { isGroup?: boolean }>({
+      query: ({ participants, name, isGroup = false }) => ({
         url: `conversation?isGroup=${isGroup}`,
         method: "POST",
-        body: conversationInfo,
+        body: { participants, name },
       }),
     }),
     getUserConversations: builder.query<ConversationResponse, { 
@@ -35,7 +32,7 @@ export const chatApi = createApi({
     getConversationById: builder.query<ConversationResponse, string>({
       query: (id) => `conversation/${id}`,
     }),
-    sendMessage: builder.mutation<MessageResponse, SendMessageRequest>({
+    sendMessage: builder.mutation<MessageResponse, SendMessageRequest | FormData>({
       query: (messageInfo) => ({
         url: "message",
         method: "POST",
@@ -49,6 +46,17 @@ export const chatApi = createApi({
     }>({
       query: ({ id, limit = 50, skip = 0 }) => 
         `message/conversation/${id}?limit=${limit}&skip=${skip}`,
+    }),
+    getMessagesByCursor: builder.query<MessageResponse, { 
+      id: string; 
+      cursor?: string; 
+      limit?: number 
+    }>({
+      query: ({ id, cursor, limit = 50 }) => {
+        const params = new URLSearchParams({ limit: limit.toString() });
+        if (cursor) params.append('cursor', cursor);
+        return `message/conversation/${id}/cursor?${params.toString()}`;
+      },
     }),
     markConversationMessagesSeen: builder.mutation<MessageResponse, string>({
       query: (id) => ({
@@ -69,11 +77,13 @@ export const {
   useCreateConversationMutation,
   useGetConversationByIdQuery,
   useGetMessagesByConversationQuery,
+  useGetMessagesByCursorQuery,
   useGetUserConversationsQuery,
   useMarkMessageSeenMutation,
   useMarkConversationMessagesSeenMutation,
   useSendMessageMutation,
   useLazyGetConversationByIdQuery,
   useLazyGetMessagesByConversationQuery,
+  useLazyGetMessagesByCursorQuery,
   useLazyGetUserConversationsQuery,
 } = chatApi;

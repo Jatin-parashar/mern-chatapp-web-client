@@ -54,6 +54,13 @@ export interface ConversationMessagesSeenUpdateEventData {
   userId: string;
 }
 
+// Delivery events
+export interface MessageDeliveredUpdateEventData {
+  conversationId: string;
+  messageId: string;
+  userId: string;
+}
+
 // Typing events
 export interface TypingEventData {
   conversationId: string;

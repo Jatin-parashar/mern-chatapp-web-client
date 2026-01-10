@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import Peer from "simple-peer";
 import type { Instance, SignalData } from "simple-peer";
 import type { RootState } from "../../app/store";
+import { showCallNotification } from "../../utils/notifications";
 import {
   setIncomingCall,
   setCallStatus,
@@ -48,15 +49,13 @@ export const useCall = () => {
     incomingCall,
   } = useSelector((state: RootState) => state.call);
 
-  const activeConversationRef = useRef(activeConversation);
   const peerRef = useRef<Instance | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const pendingSignalRef = useRef<SignalData | null>(null);
 
   useEffect(() => {
-    activeConversationRef.current = activeConversation;
     peerRef.current = peer;
-  }, [activeConversation, peer]);
+  }, [peer]);
 
   // Cleanup function
   const cleanupCall = useCallback(() => {
@@ -82,16 +81,16 @@ export const useCall = () => {
     const handleCallReceived = ({ callId, callerInfo, isVideoCall, signal }: CallReceivedEventData) => {
       dispatch(setIncomingCall({ callId, callerInfo, isVideoCall }));
       dispatch(setCallStatus("ringing"));
-      // Cast the signal to SignalData for simple-peer compatibility
-      pendingSignalRef.current = signal as unknown as SignalData;
+      pendingSignalRef.current = signal as SignalData;
+      showCallNotification(callerInfo.name, isVideoCall, callerInfo.profilePic);
     };
 
     const handleCallAccepted = ({ signal }: CallAcceptedEventData) => {
       dispatch(setCallStatus("connecting"));
       if (peerRef.current) {
-        peerRef.current.signal(signal as unknown as SignalData);
+        peerRef.current.signal(signal as SignalData);
       } else {
-        pendingSignalRef.current = signal as unknown as SignalData;
+        pendingSignalRef.current = signal as SignalData;
       }
     };
 
@@ -108,12 +107,14 @@ export const useCall = () => {
     const handleCallSignal = ({ signal }: CallSignalEventData) => {
       if (peerRef.current) {
         try {
-          peerRef.current.signal(signal as unknown as SignalData);
+          peerRef.current.signal(signal as SignalData);
         } catch (error) {
-          console.error("Error handling signal:", error);
+          if (import.meta.env.DEV) {
+            console.error("Error handling signal:", error);
+          }
         }
       } else {
-        pendingSignalRef.current = signal as unknown as SignalData;
+        pendingSignalRef.current = signal as SignalData;
       }
     };
 
@@ -168,7 +169,7 @@ export const useCall = () => {
         if (!socket) return;
 
         if (initiator) {
-          const receiver = activeConversationRef.current?.participants.find(
+          const receiver = activeConversation?.participants.find(
             (p) => p._id !== currentUser._id
           );
           
@@ -197,32 +198,40 @@ export const useCall = () => {
       });
 
       peer.on("error", (error: Error) => {
-        console.error("Peer error:", error);
+        if (import.meta.env.DEV) {
+          console.error("Peer error:", error);
+        }
         dispatch(endCallAction());
         cleanupCall();
       });
 
       peer.on("close", () => {
-        console.log("Peer connection closed");
+        if (import.meta.env.DEV) {
+          console.log("Peer connection closed");
+        }
         dispatch(endCallAction());
         cleanupCall();
       });
 
       peer.on("connect", () => {
-        console.log("Peer connected");
+        if (import.meta.env.DEV) {
+          console.log("Peer connected");
+        }
         if (pendingSignalRef.current) {
           try {
             peer.signal(pendingSignalRef.current);
             pendingSignalRef.current = null;
           } catch (error) {
-            console.error("Error processing pending signal:", error);
+            if (import.meta.env.DEV) {
+              console.error("Error processing pending signal:", error);
+            }
           }
         }
       });
 
       return peer;
     },
-    [socket, currentUser, dispatch, cleanupCall]
+    [socket, currentUser, activeConversation, dispatch, cleanupCall]
   );
 
   // Initiate call
@@ -232,7 +241,7 @@ export const useCall = () => {
         const stream = await getMediaStream(isVideoCall);
         const newCallId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-        const receiver = activeConversationRef.current?.participants.find(
+        const receiver = activeConversation?.participants.find(
           (p) => p._id === receiverId
         );
 
@@ -246,19 +255,23 @@ export const useCall = () => {
         peerRef.current = peer;
         dispatch(setPeer(peer));
       } catch (error) {
-        console.error("Error initiating call:", error);
+        if (import.meta.env.DEV) {
+          console.error("Error initiating call:", error);
+        }
         dispatch(endCallAction());
         cleanupCall();
       }
     },
-    [getMediaStream, createPeerConnection, dispatch, cleanupCall]
+    [getMediaStream, createPeerConnection, dispatch, cleanupCall, activeConversation]
   );
 
   // Answer call
   const answerCall = useCallback(async () => {
     try {
       if (!incomingCall) {
-        console.error("No incoming call to answer");
+        if (import.meta.env.DEV) {
+          console.error("No incoming call to answer");
+        }
         return;
       }
 
@@ -270,17 +283,21 @@ export const useCall = () => {
           peer.signal(pendingSignalRef.current);
           pendingSignalRef.current = null;
         } catch (error) {
-          console.error("Error processing initial signal:", error);
+          if (import.meta.env.DEV) {
+            console.error("Error processing initial signal:", error);
+          }
         }
       }
 
       peerRef.current = peer;
-      dispatch(setPeer(peer as any)); // Cast to any if Redux expects RTCPeerConnection
+      dispatch(setPeer(peer));
       dispatch(acceptCall());
       dispatch(setCallId(incomingCall.callId));
       dispatch(setIncomingCall(null));
     } catch (error) {
-      console.error("Error answering call:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error answering call:", error);
+      }
       dispatch(endCallAction());
       cleanupCall();
     }

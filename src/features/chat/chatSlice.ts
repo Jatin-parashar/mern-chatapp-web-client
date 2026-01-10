@@ -30,6 +30,9 @@ const chatSlice = createSlice({
         ...newConvo,
         lastLocalActivityAt: newConvo.updatedAt,
       };
+      if (state.activeConversation && state.activeConversation._id === newConvo._id) {
+        state.activeConversation = state.conversations[newConvo._id];
+      }
     },
     setMessages: (state, action: PayloadAction<Message[]>) => {
       state.messages = action.payload;
@@ -53,6 +56,10 @@ const chatSlice = createSlice({
       if (state.conversations[conversationId]) {
         state.conversations[conversationId].lastMessage = newLastMessage;
         state.conversations[conversationId].lastLocalActivityAt = newLastMessage.updatedAt;
+        
+        if (state.activeConversation && state.activeConversation._id === conversationId) {
+          state.activeConversation.lastMessage = newLastMessage;
+        }
       }
     },
     setConversations: (state, action: PayloadAction<Conversation[]>) => {
@@ -71,6 +78,26 @@ const chatSlice = createSlice({
     setOnlineUsers: (state, action: PayloadAction<string[]>) => {
       state.onlineUsers = action.payload;
     },
+    updateMessageDeliveredStatus: (state, action: PayloadAction<{ messageId: string; userId: string }>) => {
+      const { messageId, userId } = action.payload;
+      const message = state.messages.find((m) => m._id === messageId);
+      
+      if (message && !message.deliveredTo.some(user => 
+        (typeof user === 'string' ? user : user._id) === userId
+      )) {
+        message.deliveredTo.push(userId);
+      }
+
+      Object.values(state.conversations).forEach(conv => {
+        if (conv.lastMessage && conv.lastMessage._id === messageId) {
+          if (!conv.lastMessage.deliveredTo.some(user => 
+            (typeof user === 'string' ? user : user._id) === userId
+          )) {
+            conv.lastMessage.deliveredTo.push(userId);
+          }
+        }
+      });
+    },
     updateMessageSeenStatus: (state, action: PayloadAction<{ messageId: string; userId: string }>) => {
       const { messageId, userId } = action.payload;
       const message = state.messages.find((m) => m._id === messageId);
@@ -80,6 +107,16 @@ const chatSlice = createSlice({
       )) {
         message.seenBy.push(userId);
       }
+
+      Object.values(state.conversations).forEach(conv => {
+        if (conv.lastMessage && conv.lastMessage._id === messageId) {
+          if (!conv.lastMessage.seenBy.some(user => 
+            (typeof user === 'string' ? user : user._id) === userId
+          )) {
+            conv.lastMessage.seenBy.push(userId);
+          }
+        }
+      });
     },
     updateConversationMessagesSeenStatus: (state, action: PayloadAction<{ 
       conversationId: string; 
@@ -94,6 +131,13 @@ const chatSlice = createSlice({
           msg.seenBy.push(userId);
         }
       });
+
+      if (state.conversations[conversationId]?.lastMessage) {
+        const lastMsg = state.conversations[conversationId].lastMessage!;
+        if (!lastMsg.seenBy.some(user => (typeof user === 'string' ? user : user._id) === userId)) {
+          lastMsg.seenBy.push(userId);
+        }
+      }
     },
     markConversationMessagesAsSeen: (state, action: PayloadAction<{ 
       conversationId: string; 
@@ -148,6 +192,7 @@ export const {
   clearMessages,
   setOnlineUsers,
   setTypingStatus,
+  updateMessageDeliveredStatus,
   updateMessageSeenStatus,
   updateConversationMessagesSeenStatus,
   markConversationMessagesAsSeen,

@@ -1,10 +1,12 @@
-export const getServerURL = (path:string) => {
-  return `${import.meta.env.VITE_SERVER_URL}/api/v1/${path}`;
+import { API_CONFIG, APP_CONFIG } from '../config/constants';
+
+export const getServerURL = (path: string) => {
+  return `${API_CONFIG.SERVER_URL}/api/v1/${path}`;
 };
 
-export const socketURL = import.meta.env.VITE_SERVER_URL;
+export const socketURL = API_CONFIG.SOCKET_URL;
 
-export const appTitle = "Elevate Messaging"
+export const appTitle = APP_CONFIG.TITLE;
 
 // TBD
 // export const API_ENDPOINTS = {

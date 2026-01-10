@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { setCredentials } from "../features/auth/authSlice";
 import { useLazyGetUserByIdQuery } from "../features/user/userApi";
 import { updateUser } from "../features/user/userSlice";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -14,6 +14,8 @@ import { authToasts, showToast } from "../utils/toast";
 import type { AuthData } from "@/types";
 import { appTitle } from "@/utils/constants";
 import { Helmet } from "react-helmet";
+import { debounce } from "../utils/debounce";
+import { TIMING_CONFIG } from "../config/constants";
 
 export default function RegisterPage() {
   const dispatch = useDispatch();
@@ -32,7 +34,15 @@ export default function RegisterPage() {
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  const debouncedCheckUsername = useCallback(
+    debounce((username: string) => {
+      if (username.length >= 3) {
+        checkUsername(username);
+      }
+    }, TIMING_CONFIG.DEBOUNCE_DELAY),
+    [checkUsername]
+  );
 
   const handleUsernameChange = (value: string) => {
     const lowercase = value.toLowerCase();
@@ -44,8 +54,7 @@ export default function RegisterPage() {
     }
     
     setUsernameStatus('checking');
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => checkUsername(lowercase), 500);
+    debouncedCheckUsername(lowercase);
   };
 
   const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,14 +112,6 @@ export default function RegisterPage() {
       setUsernameStatus(usernameCheck.data.available ? 'available' : 'unavailable');
     }
   }, [usernameCheck]);
-
-
-
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, []);
 
   const isProcessing = isLoading;
 

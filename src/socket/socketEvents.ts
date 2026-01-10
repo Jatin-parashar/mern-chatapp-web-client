@@ -14,6 +14,9 @@ export const SOCKET_NEW_CONVERSATION = "newConversation";
 export const SOCKET_NEW_CONVERSATION_RECEIVED = "conversationReceived";
 
 // Message status events
+export const SOCKET_MESSAGE_DELIVERED = "messageDelivered";
+export const SOCKET_MESSAGE_DELIVERED_UPDATE = "messageDeliveredUpdate";
+export const SOCKET_BULK_MESSAGES_DELIVERED = "bulkMessagesDelivered";
 export const SOCKET_MESSAGE_SEEN = "messageSeen";
 export const SOCKET_MESSAGE_SEEN_UPDATE = "messageSeenUpdate";
 export const SOCKET_CONVERSATION_MESSAGES_SEEN = "conversationMessageSeen";

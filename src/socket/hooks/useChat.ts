@@ -5,24 +5,27 @@ import {
   addMessage,
   addConversation,
   updateConversationsWithLatestMessage,
+  updateMessageDeliveredStatus,
   updateMessageSeenStatus,
   updateConversationMessagesSeenStatus,
+  markConversationMessagesAsSeen,
 } from "../../features/chat/chatSlice";
-import { useMarkMessageSeenMutation } from "../../features/chat/chatApi";
+import { useMarkMessageSeenMutation, useMarkConversationMessagesSeenMutation } from "../../features/chat/chatApi";
 import { useSocketInstance } from "../SocketContext";
+import { showMessageNotification } from "../../utils/notifications";
 import {
   SOCKET_JOIN_ROOM,
-  SOCKET_NEW_MESSAGE,
   SOCKET_MESSAGE_RECEIVED,
-  SOCKET_NEW_CONVERSATION,
   SOCKET_NEW_CONVERSATION_RECEIVED,
-  SOCKET_MESSAGE_SEEN,
+  SOCKET_MESSAGE_DELIVERED,
+  SOCKET_MESSAGE_DELIVERED_UPDATE,
+  SOCKET_BULK_MESSAGES_DELIVERED,
   SOCKET_MESSAGE_SEEN_UPDATE,
-  SOCKET_CONVERSATION_MESSAGES_SEEN,
   SOCKET_CONVERSATION_MESSAGES_SEEN_UPDATE,
 } from "../socketEvents";
 import type {
   ConversationReceivedEventData,
+  MessageDeliveredUpdateEventData,
   MessageSeenUpdateEventData,
   ConversationMessagesSeenUpdateEventData,
 } from "../../types/socket";
@@ -34,45 +37,72 @@ export const useChat = () => {
   const activeConversation = useSelector((state: RootState) => state.chat.activeConversation);
   const currentUserId = useSelector((state: RootState) => state.user._id);
   
-  const activeConversationRef = useRef(activeConversation);
-  const currentUserIdRef = useRef(currentUserId);
   const [markMessageSeen] = useMarkMessageSeenMutation();
-
-  useEffect(() => {
-    activeConversationRef.current = activeConversation;
-    currentUserIdRef.current = currentUserId;
-  }, [activeConversation, currentUserId]);
+  const [markConversationMessagesSeen] = useMarkConversationMessagesSeenMutation();
+  
+  // Track bulk-delivered messages to avoid redundant emissions
+  const bulkDeliveredMessagesRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!socket) return;
 
     const handleMessageReceived = async (message: Message) => {
-      const activeConv = activeConversationRef.current;
-      const userId = currentUserIdRef.current;
-
       dispatch(updateConversationsWithLatestMessage(message));
 
-      if (activeConv && activeConv._id === message.conversationId) {
+      // Emit delivery confirmation if not bulk-delivered
+      if (message.sender._id !== currentUserId && !bulkDeliveredMessagesRef.current.has(message._id)) {
+        socket.emit(SOCKET_MESSAGE_DELIVERED, { messageId: message._id });
+      }
+
+      if (activeConversation && activeConversation._id === message.conversationId) {
         dispatch(addMessage(message));
 
-        // Auto-mark as seen if in active conversation and not sender
-        if (message.sender._id !== userId) {
+        if (message.sender._id !== currentUserId) {
           try {
             await markMessageSeen(message._id).unwrap();
-            socket.emit(SOCKET_MESSAGE_SEEN, {
-              conversationId: activeConv._id,
-              messageId: message._id,
-              userId,
-            });
+            dispatch(updateMessageSeenStatus({ messageId: message._id, userId: currentUserId }));
           } catch (error) {
-            console.error("Failed to mark message as seen:", error);
+            if (import.meta.env.DEV) {
+              console.error("Failed to mark message as seen:", error);
+            }
           }
+        }
+      } else if (message.sender._id !== currentUserId) {
+        if (document.hidden) {
+          showMessageNotification(
+            message.sender.name,
+            message.content || "Sent an attachment",
+            message.sender.profilePic
+          );
         }
       }
     };
 
     const handleConversationReceived = (data: ConversationReceivedEventData) => {
       dispatch(addConversation(data.conversation));
+    };
+    
+    const handleBulkMessagesDelivered = ({ messageIds }: { messageIds: string[] }) => {
+      // Store bulk-delivered message IDs to skip emitting for them
+      messageIds.forEach(id => bulkDeliveredMessagesRef.current.add(id));
+      
+      // Clean up after 5 seconds to prevent memory leak
+      setTimeout(() => {
+        messageIds.forEach(id => bulkDeliveredMessagesRef.current.delete(id));
+      }, 5000);
+    };
+
+    const handleMessageDeliveredUpdate = (data: MessageDeliveredUpdateEventData | { conversationId: string; messageIds: string[]; userId: string }) => {
+      // Handle both single and bulk delivery updates
+      if ('messageIds' in data) {
+        // Bulk update
+        data.messageIds.forEach(messageId => {
+          dispatch(updateMessageDeliveredStatus({ messageId, userId: data.userId }));
+        });
+      } else {
+        // Single update
+        dispatch(updateMessageDeliveredStatus({ messageId: data.messageId, userId: data.userId }));
+      }
     };
 
     const handleMessageSeenUpdate = ({ messageId, userId }: MessageSeenUpdateEventData) => {
@@ -88,16 +118,20 @@ export const useChat = () => {
 
     socket.on(SOCKET_MESSAGE_RECEIVED, handleMessageReceived);
     socket.on(SOCKET_NEW_CONVERSATION_RECEIVED, handleConversationReceived);
+    socket.on(SOCKET_BULK_MESSAGES_DELIVERED, handleBulkMessagesDelivered);
+    socket.on(SOCKET_MESSAGE_DELIVERED_UPDATE, handleMessageDeliveredUpdate);
     socket.on(SOCKET_MESSAGE_SEEN_UPDATE, handleMessageSeenUpdate);
     socket.on(SOCKET_CONVERSATION_MESSAGES_SEEN_UPDATE, handleConversationMessagesSeenUpdate);
 
     return () => {
       socket.off(SOCKET_MESSAGE_RECEIVED, handleMessageReceived);
       socket.off(SOCKET_NEW_CONVERSATION_RECEIVED, handleConversationReceived);
+      socket.off(SOCKET_BULK_MESSAGES_DELIVERED, handleBulkMessagesDelivered);
+      socket.off(SOCKET_MESSAGE_DELIVERED_UPDATE, handleMessageDeliveredUpdate);
       socket.off(SOCKET_MESSAGE_SEEN_UPDATE, handleMessageSeenUpdate);
       socket.off(SOCKET_CONVERSATION_MESSAGES_SEEN_UPDATE, handleConversationMessagesSeenUpdate);
     };
-  }, [socket, dispatch, markMessageSeen]);
+  }, [socket, dispatch, markMessageSeen, activeConversation, currentUserId]);
 
   const emitJoinRoom = useCallback(
     (roomId: string) => {
@@ -107,43 +141,22 @@ export const useChat = () => {
     [socket]
   );
 
-  const emitNewMessage = useCallback(
-    (message: Message) => {
-      if (!socket) return;
-      socket.emit(SOCKET_NEW_MESSAGE, { message });
-    },
-    [socket]
-  );
-
-  const emitNewConversation = useCallback(
-    (conversationId: string) => {
-      if (!socket) return;
-      socket.emit(SOCKET_NEW_CONVERSATION, { conversationId });
-    },
-    [socket]
-  );
-
-  const emitMessageSeen = useCallback(
-    (conversationId: string, messageId: string) => {
-      if (!socket) return;
-      socket.emit(SOCKET_MESSAGE_SEEN, { conversationId, messageId });
-    },
-    [socket]
-  );
-
   const emitConversationMessagesSeen = useCallback(
-    (conversationId: string) => {
-      if (!socket) return;
-      socket.emit(SOCKET_CONVERSATION_MESSAGES_SEEN, { conversationId });
+    async (conversationId: string) => {
+      try {
+        await markConversationMessagesSeen(conversationId).unwrap();
+        dispatch(markConversationMessagesAsSeen({ conversationId, userId: currentUserId }));
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.error("Failed to mark conversation messages as seen:", error);
+        }
+      }
     },
-    [socket]
+    [markConversationMessagesSeen, dispatch, currentUserId]
   );
 
   return {
     emitJoinRoom,
-    emitNewMessage,
-    emitNewConversation,
-    emitMessageSeen,
     emitConversationMessagesSeen,
   };
 };
