@@ -20,7 +20,6 @@ export default function CallModal() {
     localStream,
     remoteStream,
     isVideoCall,
-    callerInfo,
     receiverInfo,
     isAudioEnabled,
     isVideoEnabled,
@@ -50,12 +49,14 @@ export default function CallModal() {
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
+      localVideoRef.current.play().catch(err => console.error("Local video play error:", err));
     }
   }, [localStream]);
 
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
+      remoteVideoRef.current.play().catch(err => console.error("Remote video play error:", err));
     }
   }, [remoteStream]);
 
@@ -65,7 +66,7 @@ export default function CallModal() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const participantInfo = incomingCall ? incomingCall.callerInfo : receiverInfo || callerInfo;
+  const participantInfo = incomingCall?.callerInfo || receiverInfo;
 
   return (
     <Dialog open={isCallActive || !!incomingCall} onOpenChange={(open) => !open && endCall()}>

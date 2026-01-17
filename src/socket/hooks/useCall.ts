@@ -94,7 +94,13 @@ export const useCall = () => {
       }
     };
 
-    const handleCallDeclined = (_data: CallDeclinedEventData) => {
+    const handleCallDeclined = (data: CallDeclinedEventData) => {
+      const reason = data.reason || "Call declined";
+      if (reason === "User is offline") {
+        alert("User is currently offline");
+      } else if (reason === "No answer") {
+        alert("No answer");
+      }
       dispatch(endCallAction());
       cleanupCall();
     };
@@ -151,7 +157,9 @@ export const useCall = () => {
       dispatch(setLocalStream(stream));
       return stream;
     } catch (error) {
-      console.error("Error accessing media devices:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error accessing media devices:", error);
+      }
       throw error;
     }
   }, [dispatch]);
@@ -201,46 +209,23 @@ export const useCall = () => {
         if (import.meta.env.DEV) {
           console.error("Peer error:", error);
         }
-        dispatch(endCallAction());
-        cleanupCall();
       });
 
       peer.on("close", () => {
         if (import.meta.env.DEV) {
           console.log("Peer connection closed");
         }
-        dispatch(endCallAction());
-        cleanupCall();
-      });
-
-      peer.on("connect", () => {
-        if (import.meta.env.DEV) {
-          console.log("Peer connected");
-        }
-        if (pendingSignalRef.current) {
-          try {
-            peer.signal(pendingSignalRef.current);
-            pendingSignalRef.current = null;
-          } catch (error) {
-            if (import.meta.env.DEV) {
-              console.error("Error processing pending signal:", error);
-            }
-          }
-        }
       });
 
       return peer;
     },
-    [socket, currentUser, activeConversation, dispatch, cleanupCall]
+    [socket, currentUser, activeConversation, dispatch]
   );
 
   // Initiate call
   const initiateCall = useCallback(
     async (receiverId: string, isVideoCall: boolean) => {
       try {
-        const stream = await getMediaStream(isVideoCall);
-        const newCallId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
         const receiver = activeConversation?.participants.find(
           (p) => p._id === receiverId
         );
@@ -248,6 +233,9 @@ export const useCall = () => {
         if (!receiver) {
           throw new Error("Receiver not found");
         }
+
+        const stream = await getMediaStream(isVideoCall);
+        const newCallId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
         dispatch(startCall({ receiverInfo: receiver, isVideoCall, callId: newCallId }));
 
@@ -258,6 +246,7 @@ export const useCall = () => {
         if (import.meta.env.DEV) {
           console.error("Error initiating call:", error);
         }
+        alert("Failed to access camera/microphone. Please check permissions.");
         dispatch(endCallAction());
         cleanupCall();
       }
@@ -276,28 +265,26 @@ export const useCall = () => {
       }
 
       const stream = await getMediaStream(incomingCall.isVideoCall);
-      const peer = createPeerConnection(false, stream, incomingCall.callId);
-
-      if (pendingSignalRef.current) {
-        try {
-          peer.signal(pendingSignalRef.current);
-          pendingSignalRef.current = null;
-        } catch (error) {
-          if (import.meta.env.DEV) {
-            console.error("Error processing initial signal:", error);
-          }
-        }
-      }
-
-      peerRef.current = peer;
-      dispatch(setPeer(peer));
+      
       dispatch(acceptCall());
       dispatch(setCallId(incomingCall.callId));
+      
+      const peer = createPeerConnection(false, stream, incomingCall.callId);
+      peerRef.current = peer;
+      dispatch(setPeer(peer));
+      
+      // Signal the offer after peer is created
+      if (pendingSignalRef.current) {
+        peer.signal(pendingSignalRef.current);
+        pendingSignalRef.current = null;
+      }
+      
       dispatch(setIncomingCall(null));
     } catch (error) {
       if (import.meta.env.DEV) {
         console.error("Error answering call:", error);
       }
+      alert("Failed to access camera/microphone. Please check permissions.");
       dispatch(endCallAction());
       cleanupCall();
     }

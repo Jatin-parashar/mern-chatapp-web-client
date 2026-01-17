@@ -8,18 +8,12 @@ export const SOCKET_ONLINE_USERS = "onlineUsers";
 
 // Chat events
 export const SOCKET_JOIN_ROOM = "joinRoom";
-export const SOCKET_NEW_MESSAGE = "newMessage";
 export const SOCKET_MESSAGE_RECEIVED = "messageReceived";
-export const SOCKET_NEW_CONVERSATION = "newConversation";
 export const SOCKET_NEW_CONVERSATION_RECEIVED = "conversationReceived";
 
 // Message status events
-export const SOCKET_MESSAGE_DELIVERED = "messageDelivered";
 export const SOCKET_MESSAGE_DELIVERED_UPDATE = "messageDeliveredUpdate";
-export const SOCKET_BULK_MESSAGES_DELIVERED = "bulkMessagesDelivered";
-export const SOCKET_MESSAGE_SEEN = "messageSeen";
 export const SOCKET_MESSAGE_SEEN_UPDATE = "messageSeenUpdate";
-export const SOCKET_CONVERSATION_MESSAGES_SEEN = "conversationMessageSeen";
 export const SOCKET_CONVERSATION_MESSAGES_SEEN_UPDATE = "conversationMessageSeenUpdate";
 
 // Typing events

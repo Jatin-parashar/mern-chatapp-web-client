@@ -77,10 +77,6 @@ const callSlice = createSlice({
     },
     acceptCall: (state) => {
       state.callStatus = "connecting";
-      if (state.callerInfo) {
-        state.receiverInfo = state.callerInfo;
-        state.callerInfo = null;
-      }
       state.isCallActive = true;
     },
     connectCall: (state) => {

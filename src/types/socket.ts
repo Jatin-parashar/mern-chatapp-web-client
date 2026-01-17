@@ -83,7 +83,7 @@ export interface CallInitiatedEventData {
     profilePic?: string;
   };
   isVideoCall: boolean;
-  signal: RTCSessionDescriptionInit;
+  signal: any; // simple-peer SignalData
 }
 
 export interface CallReceivedEventData {
@@ -95,12 +95,12 @@ export interface CallReceivedEventData {
     profilePic?: string;
   };
   isVideoCall: boolean;
-  signal: RTCSessionDescriptionInit;
+  signal: any; // simple-peer SignalData
 }
 
 export interface CallAcceptedEventData {
   callId: string;
-  signal: RTCSessionDescriptionInit;
+  signal: any; // simple-peer SignalData
 }
 
 export interface CallDeclinedEventData {
@@ -114,7 +114,7 @@ export interface CallEndedEventData {
 
 export interface CallSignalEventData {
   callId: string;
-  signal: RTCSessionDescriptionInit | RTCIceCandidateInit;
+  signal: any; // simple-peer SignalData (can be offer/answer/ICE)
 }
 
 export interface CallPeerDisconnectedEventData {

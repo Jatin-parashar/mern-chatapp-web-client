@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../app/store";
 import {
@@ -17,9 +17,7 @@ import {
   SOCKET_JOIN_ROOM,
   SOCKET_MESSAGE_RECEIVED,
   SOCKET_NEW_CONVERSATION_RECEIVED,
-  SOCKET_MESSAGE_DELIVERED,
   SOCKET_MESSAGE_DELIVERED_UPDATE,
-  SOCKET_BULK_MESSAGES_DELIVERED,
   SOCKET_MESSAGE_SEEN_UPDATE,
   SOCKET_CONVERSATION_MESSAGES_SEEN_UPDATE,
 } from "../socketEvents";
@@ -39,20 +37,12 @@ export const useChat = () => {
   
   const [markMessageSeen] = useMarkMessageSeenMutation();
   const [markConversationMessagesSeen] = useMarkConversationMessagesSeenMutation();
-  
-  // Track bulk-delivered messages to avoid redundant emissions
-  const bulkDeliveredMessagesRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!socket) return;
 
     const handleMessageReceived = async (message: Message) => {
       dispatch(updateConversationsWithLatestMessage(message));
-
-      // Emit delivery confirmation if not bulk-delivered
-      if (message.sender._id !== currentUserId && !bulkDeliveredMessagesRef.current.has(message._id)) {
-        socket.emit(SOCKET_MESSAGE_DELIVERED, { messageId: message._id });
-      }
 
       if (activeConversation && activeConversation._id === message.conversationId) {
         dispatch(addMessage(message));
@@ -81,16 +71,6 @@ export const useChat = () => {
     const handleConversationReceived = (data: ConversationReceivedEventData) => {
       dispatch(addConversation(data.conversation));
     };
-    
-    const handleBulkMessagesDelivered = ({ messageIds }: { messageIds: string[] }) => {
-      // Store bulk-delivered message IDs to skip emitting for them
-      messageIds.forEach(id => bulkDeliveredMessagesRef.current.add(id));
-      
-      // Clean up after 5 seconds to prevent memory leak
-      setTimeout(() => {
-        messageIds.forEach(id => bulkDeliveredMessagesRef.current.delete(id));
-      }, 5000);
-    };
 
     const handleMessageDeliveredUpdate = (data: MessageDeliveredUpdateEventData | { conversationId: string; messageIds: string[]; userId: string }) => {
       // Handle both single and bulk delivery updates
@@ -118,7 +98,6 @@ export const useChat = () => {
 
     socket.on(SOCKET_MESSAGE_RECEIVED, handleMessageReceived);
     socket.on(SOCKET_NEW_CONVERSATION_RECEIVED, handleConversationReceived);
-    socket.on(SOCKET_BULK_MESSAGES_DELIVERED, handleBulkMessagesDelivered);
     socket.on(SOCKET_MESSAGE_DELIVERED_UPDATE, handleMessageDeliveredUpdate);
     socket.on(SOCKET_MESSAGE_SEEN_UPDATE, handleMessageSeenUpdate);
     socket.on(SOCKET_CONVERSATION_MESSAGES_SEEN_UPDATE, handleConversationMessagesSeenUpdate);
@@ -126,7 +105,6 @@ export const useChat = () => {
     return () => {
       socket.off(SOCKET_MESSAGE_RECEIVED, handleMessageReceived);
       socket.off(SOCKET_NEW_CONVERSATION_RECEIVED, handleConversationReceived);
-      socket.off(SOCKET_BULK_MESSAGES_DELIVERED, handleBulkMessagesDelivered);
       socket.off(SOCKET_MESSAGE_DELIVERED_UPDATE, handleMessageDeliveredUpdate);
       socket.off(SOCKET_MESSAGE_SEEN_UPDATE, handleMessageSeenUpdate);
       socket.off(SOCKET_CONVERSATION_MESSAGES_SEEN_UPDATE, handleConversationMessagesSeenUpdate);

@@ -56,13 +56,13 @@ export default function ChatHeader({ onViewProfile }: ChatHeaderProps) {
   };
 
   const handleAudioCall = () => {
-    if (otherParticipant) {
+    if (otherParticipant && !activeConversation.isGroup) {
       initiateCall(otherParticipant._id, false);
     }
   };
 
   const handleVideoCall = () => {
-    if (otherParticipant) {
+    if (otherParticipant && !activeConversation.isGroup) {
       initiateCall(otherParticipant._id, true);
     }
   };
@@ -107,7 +107,7 @@ export default function ChatHeader({ onViewProfile }: ChatHeaderProps) {
         <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10" onClick={handleAudioCall} disabled={!otherParticipant}>
+              <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10" onClick={handleAudioCall} disabled={!otherParticipant || activeConversation.isGroup}>
                 <Phone className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </TooltipTrigger>
@@ -118,7 +118,7 @@ export default function ChatHeader({ onViewProfile }: ChatHeaderProps) {
           
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10" onClick={handleVideoCall} disabled={!otherParticipant}>
+              <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10" onClick={handleVideoCall} disabled={!otherParticipant || activeConversation.isGroup}>
                 <Video className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </TooltipTrigger>
