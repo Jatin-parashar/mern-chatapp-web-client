@@ -8,6 +8,7 @@ import type { RootState } from "../../../app/store";
 import type { Message } from "../../../types/entities";
 import MessageBubble from "./MessageBubble";
 import MessageInfoModal from "./MessageInfoModal";
+import ChatInput from "./ChatInput";
 import { ScrollArea } from "../../ui/scroll-area";
 import moment from "moment";
 

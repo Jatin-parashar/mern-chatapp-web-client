@@ -4,6 +4,7 @@ import Peer from "simple-peer";
 import type { Instance, SignalData } from "simple-peer";
 import type { RootState } from "../../app/store";
 import { showCallNotification } from "../../utils/notifications";
+import { showToast } from "../../utils/toast";
 import {
   setIncomingCall,
   setCallStatus,
@@ -52,6 +53,8 @@ export const useCall = () => {
   const peerRef = useRef<Instance | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const pendingSignalRef = useRef<SignalData | null>(null);
+  const cleanupCallRef = useRef<(() => void) | undefined>(undefined);
+  const toastShownRef = useRef(false);
 
   useEffect(() => {
     peerRef.current = peer;
@@ -60,7 +63,12 @@ export const useCall = () => {
   // Cleanup function
   const cleanupCall = useCallback(() => {
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current.getTracks().forEach((track) => {
+        track.stop();
+        if (import.meta.env.DEV) {
+          console.log('Stopped track:', track.kind);
+        }
+      });
       localStreamRef.current = null;
     }
     if (peerRef.current) {
@@ -73,6 +81,8 @@ export const useCall = () => {
     dispatch(setPeer(null));
     dispatch(setCallId(null));
   }, [dispatch]);
+
+  cleanupCallRef.current = cleanupCall;
 
   // Socket event listeners
   useEffect(() => {
@@ -95,19 +105,18 @@ export const useCall = () => {
     };
 
     const handleCallDeclined = (data: CallDeclinedEventData) => {
-      const reason = data.reason || "Call declined";
-      if (reason === "User is offline") {
-        alert("User is currently offline");
-      } else if (reason === "No answer") {
-        alert("No answer");
-      }
+      cleanupCallRef.current?.();
       dispatch(endCallAction());
-      cleanupCall();
+      if (data.reason === "No answer" && !toastShownRef.current) {
+        toastShownRef.current = true;
+        showToast.info("No answer");
+        setTimeout(() => { toastShownRef.current = false; }, 500);
+      }
     };
 
     const handleCallEnded = (_data: CallEndedEventData) => {
+      cleanupCallRef.current?.();
       dispatch(endCallAction());
-      cleanupCall();
     };
 
     const handleCallSignal = ({ signal }: CallSignalEventData) => {
@@ -125,8 +134,8 @@ export const useCall = () => {
     };
 
     const handlePeerDisconnected = (_data: CallPeerDisconnectedEventData) => {
+      cleanupCallRef.current?.();
       dispatch(endCallAction());
-      cleanupCall();
     };
 
     socket.on(SOCKET_CALL_RECEIVED, handleCallReceived);
@@ -144,7 +153,7 @@ export const useCall = () => {
       socket.off(SOCKET_CALL_SIGNAL, handleCallSignal);
       socket.off(SOCKET_CALL_PEER_DISCONNECTED, handlePeerDisconnected);
     };
-  }, [socket, dispatch, cleanupCall]);
+  }, [socket]);
 
   // Get media stream
   const getMediaStream = useCallback(async (isVideoCall: boolean) => {
@@ -227,6 +236,8 @@ export const useCall = () => {
   // Initiate call
   const initiateCall = useCallback(
     async (receiverId: string, isVideoCall: boolean) => {
+      const newCallId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
       try {
         const receiver = activeConversation?.participants.find(
           (p) => p._id === receiverId
@@ -236,11 +247,9 @@ export const useCall = () => {
           throw new Error("Receiver not found");
         }
 
-        const stream = await getMediaStream(isVideoCall);
-        const newCallId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
         dispatch(startCall({ receiverInfo: receiver, isVideoCall, callId: newCallId }));
 
+        const stream = await getMediaStream(isVideoCall);
         const peer = createPeerConnection(true, stream, newCallId);
         peerRef.current = peer;
         dispatch(setPeer(peer));
@@ -248,12 +257,16 @@ export const useCall = () => {
         if (import.meta.env.DEV) {
           console.error("Error initiating call:", error);
         }
-        alert("Failed to access camera/microphone. Please check permissions.");
+        showToast.error("Failed to access camera/microphone. Please check permissions.");
+        
+        if (socket && callId) {
+          socket.emit(SOCKET_CALL_ENDED, { callId: newCallId });
+        }
         dispatch(endCallAction());
         cleanupCall();
       }
     },
-    [getMediaStream, createPeerConnection, dispatch, cleanupCall, activeConversation]
+    [socket, getMediaStream, createPeerConnection, dispatch, cleanupCall, activeConversation]
   );
 
   // Answer call
@@ -286,7 +299,7 @@ export const useCall = () => {
       if (import.meta.env.DEV) {
         console.error("Error answering call:", error);
       }
-      alert("Failed to access camera/microphone. Please check permissions.");
+      showToast.error("Failed to access camera/microphone. Please check permissions.");
       dispatch(endCallAction());
       cleanupCall();
     }

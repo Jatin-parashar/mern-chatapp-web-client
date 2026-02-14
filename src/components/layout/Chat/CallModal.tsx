@@ -31,6 +31,17 @@ export default function CallModal() {
   const callTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    return () => {
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = null;
+      }
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (callStatus === "connected") {
       callTimerRef.current = setInterval(() => {
         setCallDuration((prev) => prev + 1);
@@ -54,6 +65,8 @@ export default function CallModal() {
           console.error("Local video play error:", err);
         }
       });
+    } else if (localVideoRef.current && !localStream) {
+      localVideoRef.current.srcObject = null;
     }
   }, [localStream]);
 
@@ -65,6 +78,8 @@ export default function CallModal() {
           console.error("Remote video play error:", err);
         }
       });
+    } else if (remoteVideoRef.current && !remoteStream) {
+      remoteVideoRef.current.srcObject = null;
     }
   }, [remoteStream]);
 
@@ -169,7 +184,7 @@ export default function CallModal() {
                     autoPlay
                     playsInline
                     muted
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover scale-x-[-1]"
                   />
                   {(!localStream || !isVideoEnabled) && (
                     <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
