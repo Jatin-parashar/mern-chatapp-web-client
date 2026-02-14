@@ -4,6 +4,7 @@ import { useSendMessageMutation } from "../../../features/chat/chatApi";
 import { useTyping } from "../../../socket/hooks/useTyping";
 import { addConversation } from "../../../features/chat/chatSlice";
 import type { RootState } from "../../../app/store";
+import type { Message } from "../../../types/entities";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Send, Plus, Smile, X, FileIcon, Image as ImageIcon, Video, Music, FileText } from "lucide-react";
@@ -14,7 +15,12 @@ import { useTheme } from "next-themes";
 import { TIMING_CONFIG } from "../../../config/constants";
 import { validateFile } from "../../../utils/sanitization";
 
-export default function ChatInput() {
+interface ChatInputProps {
+  replyingTo: Message | null;
+  onCancelReply: () => void;
+}
+
+export default function ChatInput({ replyingTo, onCancelReply }: ChatInputProps) {
   const dispatch = useDispatch();
   const [message, setMessage] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -97,6 +103,7 @@ export default function ChatInput() {
       const formData = new FormData();
       formData.append('conversationId', activeConversation._id);
       if (message.trim()) formData.append('content', message.trim());
+      if (replyingTo) formData.append('replyTo', replyingTo._id);
       files.forEach(file => formData.append('files', file));
 
       // Server automatically emits socket event after successful message send
@@ -108,6 +115,7 @@ export default function ChatInput() {
       
       setMessage("");
       setFiles([]);
+      onCancelReply();
     } catch (error: any) {
       if (error?.status !== 401) {
         showToast.error(error?.data?.message || "Failed to send message");
@@ -149,6 +157,22 @@ export default function ChatInput() {
 
   return (
     <div className="border-t border-border bg-background">
+      {replyingTo && (
+        <div className="px-3 sm:px-4 py-2 bg-accent/50 flex items-center justify-between">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-muted-foreground">Replying to {replyingTo.sender.name}</p>
+            <p className="text-sm truncate">{replyingTo.content || "Attachment"}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0"
+            onClick={onCancelReply}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
       {files.length > 0 && (
         <div className="px-3 sm:px-4 py-2 flex gap-2 overflow-x-auto">
           {files.map((file, index) => (

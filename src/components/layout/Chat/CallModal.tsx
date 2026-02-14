@@ -49,14 +49,22 @@ export default function CallModal() {
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
-      localVideoRef.current.play().catch(err => console.error("Local video play error:", err));
+      localVideoRef.current.play().catch(err => {
+        if (import.meta.env.DEV) {
+          console.error("Local video play error:", err);
+        }
+      });
     }
   }, [localStream]);
 
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
-      remoteVideoRef.current.play().catch(err => console.error("Remote video play error:", err));
+      remoteVideoRef.current.play().catch(err => {
+        if (import.meta.env.DEV) {
+          console.error("Remote video play error:", err);
+        }
+      });
     }
   }, [remoteStream]);
 

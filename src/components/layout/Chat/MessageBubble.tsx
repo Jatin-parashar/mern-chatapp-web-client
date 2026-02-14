@@ -4,17 +4,19 @@ import type { Message } from "../../../types/entities";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../app/store";
 import { cn } from "../../../lib/utils";
-import { Check, CheckCheck, Info } from "lucide-react";
+import { Check, CheckCheck, Info, Reply } from "lucide-react";
 import { memo, useMemo } from "react";
 import { AttachmentRenderer } from "../../common/AttachmentRenderer";
 import { getInitials } from "../../../utils/helpers";
+import { Button } from "../../ui/button";
 
 interface MessageBubbleProps {
   message: Message;
   onShowInfo?: (message: Message) => void;
+  onReply?: (message: Message) => void;
 }
 
-const MessageBubble = memo(function MessageBubble({ message, onShowInfo }: MessageBubbleProps) {
+const MessageBubble = memo(function MessageBubble({ message, onShowInfo, onReply }: MessageBubbleProps) {
   const currentUserId = useSelector((state: RootState) => state.user._id);
 
   const { isOwnMessage, isSeen, isDelivered, hasAttachments } = useMemo(() => {
@@ -66,13 +68,29 @@ const MessageBubble = memo(function MessageBubble({ message, onShowInfo }: Messa
         )}
         
         <div className="relative">
-          {isOwnMessage && onShowInfo && (
-            <button
-              onClick={() => onShowInfo(message)}
-              className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background hover:bg-accent rounded-full p-1 shadow-md z-10"
-            >
-              <Info className="h-3 w-3 text-muted-foreground" />
-            </button>
+          {onShowInfo && (
+            <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-10">
+              {onReply && (
+                <Button
+                  onClick={() => onReply(message)}
+                  size="icon"
+                  variant="secondary"
+                  className="h-6 w-6 rounded-full shadow-md"
+                >
+                  <Reply className="h-3 w-3" />
+                </Button>
+              )}
+              {isOwnMessage && (
+                <Button
+                  onClick={() => onShowInfo(message)}
+                  size="icon"
+                  variant="secondary"
+                  className="h-6 w-6 rounded-full shadow-md"
+                >
+                  <Info className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
           )}
           <div
             className={cn(

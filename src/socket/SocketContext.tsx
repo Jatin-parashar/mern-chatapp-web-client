@@ -3,7 +3,8 @@ import { io, Socket } from "socket.io-client";
 import { useSelector } from "react-redux";
 import type { RootState } from "../app/store";
 import { socketURL } from "../utils/constants";
-import { SOCKET_CONNECT, SOCKET_SETUP } from "./socketEvents";
+import { SOCKET_CONNECT, SOCKET_SETUP, SOCKET_ERROR } from "./socketEvents";
+import { toast } from "sonner";
 
 interface SocketContextValue {
   socket: Socket | null;
@@ -66,12 +67,21 @@ export const SocketContextProvider = ({ children }: SocketContextProviderProps) 
       }
     };
 
+    const onSocketError = ({ message }: { message: string }) => {
+      if (import.meta.env.DEV) {
+        console.error('Socket error:', message);
+      }
+      toast.error(message || 'Socket operation failed');
+    };
+
     socket.on(SOCKET_CONNECT, onConnect);
     socket.on('connect_error', onConnectError);
+    socket.on(SOCKET_ERROR, onSocketError);
 
     return () => {
       socket.off(SOCKET_CONNECT, onConnect);
       socket.off('connect_error', onConnectError);
+      socket.off(SOCKET_ERROR, onSocketError);
     };
   }, [currentUserId, accessToken, socket]);
   

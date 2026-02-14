@@ -209,12 +209,14 @@ export const useCall = () => {
         if (import.meta.env.DEV) {
           console.error("Peer error:", error);
         }
+        // Don't auto-cleanup on error, let user end call
       });
 
       peer.on("close", () => {
         if (import.meta.env.DEV) {
           console.log("Peer connection closed");
         }
+        // Don't auto-cleanup on close, let user end call
       });
 
       return peer;

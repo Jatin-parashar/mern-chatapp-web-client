@@ -21,6 +21,7 @@ export default function ChatWindow() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [showMessageInfo, setShowMessageInfo] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const isInitialLoadRef = useRef(true);
   const { activeConversation, messages } = useSelector((state: RootState) => state.chat);
   const currentUserId = useSelector((state: RootState) => state.user._id);
@@ -170,6 +171,7 @@ export default function ChatWindow() {
                     setSelectedMessage(msg);
                     setShowMessageInfo(true);
                   }}
+                  onReply={(msg) => setReplyingTo(msg)}
                 />
               ))}
             </div>
@@ -194,6 +196,7 @@ export default function ChatWindow() {
       )}
         </div>
       </ScrollArea>
+      <ChatInput replyingTo={replyingTo} onCancelReply={() => setReplyingTo(null)} />
       {showMessageInfo && (
         <MessageInfoModal
           message={selectedMessage}
