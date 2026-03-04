@@ -18,15 +18,16 @@ interface MessageBubbleProps {
 }
 
 const MessageBubble = memo(function MessageBubble({ message, onShowInfo, onReply, allMessages }: MessageBubbleProps) {
-  const currentUserId = useSelector((state: RootState) => state.user._id);
+  const { currentUserId, activeConversation } = useSelector((state: RootState) => ({
+    currentUserId: state.user._id,
+    activeConversation: state.chat.activeConversation,
+  }));
 
   const repliedMessage = useMemo(() => {
     if (!message.replyTo || !allMessages) return null;
     const replyId = typeof message.replyTo === 'string' ? message.replyTo : (message.replyTo as any)._id;
     return allMessages.find(m => m._id === replyId);
   }, [message.replyTo, allMessages]);
-
-  const activeConversation = useSelector((state: RootState) => state.chat.activeConversation);
 
   const { isOwnMessage, isSeen, isDelivered, hasAttachments } = useMemo(() => {
     const isOwn = message.sender._id === currentUserId;

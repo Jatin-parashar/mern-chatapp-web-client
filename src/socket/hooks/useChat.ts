@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../app/store";
 import { toast } from "sonner";
@@ -11,7 +11,7 @@ import {
   updateConversationMessagesSeenStatus,
   markConversationMessagesAsSeen,
 } from "../../features/chat/chatSlice";
-import { useMarkMessageSeenMutation, useMarkConversationMessagesSeenMutation } from "../../features/chat/chatApi";
+import { useMarkConversationMessagesSeenMutation } from "../../features/chat/chatApi";
 import { useSocketInstance } from "../SocketContext";
 import { showMessageNotification } from "../../utils/notifications";
 import {
@@ -33,11 +33,18 @@ import type { Message } from "../../types/entities";
 export const useChat = () => {
   const { socket } = useSocketInstance();
   const dispatch = useDispatch();
+  const activeConversationRef = useRef<typeof activeConversation>(null);
   const activeConversation = useSelector((state: RootState) => state.chat.activeConversation);
   const currentUserId = useSelector((state: RootState) => state.user._id);
+  const currentUserIdRef = useRef(currentUserId);
   
-  const [markMessageSeen] = useMarkMessageSeenMutation();
+  // Keep refs in sync so socket handlers always see latest values without stale closures
+  useEffect(() => { activeConversationRef.current = activeConversation; }, [activeConversation]);
+  useEffect(() => { currentUserIdRef.current = currentUserId; }, [currentUserId]);
+  
   const [markConversationMessagesSeen] = useMarkConversationMessagesSeenMutation();
+  const markConversationMessagesSeenRef = useRef(markConversationMessagesSeen);
+  useEffect(() => { markConversationMessagesSeenRef.current = markConversationMessagesSeen; }, [markConversationMessagesSeen]);
 
   useEffect(() => {
     if (!socket) return;
@@ -45,20 +52,22 @@ export const useChat = () => {
     const handleMessageReceived = async (message: Message) => {
       dispatch(updateConversationsWithLatestMessage(message));
 
-      if (activeConversation && activeConversation._id === message.conversationId) {
+      const activeConv = activeConversationRef.current;
+      const userId = currentUserIdRef.current;
+
+      if (activeConv && activeConv._id === message.conversationId) {
         dispatch(addMessage(message));
 
-        if (message.sender._id !== currentUserId) {
+        if (message.sender._id !== userId) {
           try {
-            await markMessageSeen(message._id).unwrap();
-            dispatch(updateMessageSeenStatus({ messageId: message._id, userId: currentUserId }));
+            // Use bulk seen to catch any previously unread messages too
+            await markConversationMessagesSeenRef.current(activeConv._id).unwrap();
+            dispatch(markConversationMessagesAsSeen({ conversationId: activeConv._id, userId }));
           } catch (error) {
-            if (import.meta.env.DEV) {
-              console.error("Failed to mark message as seen:", error);
-            }
+            if (import.meta.env.DEV) console.error("Failed to mark messages as seen:", error);
           }
         }
-      } else if (message.sender._id !== currentUserId) {
+      } else if (message.sender._id !== userId) {
         if (document.hidden) {
           showMessageNotification(
             message.sender.name,
@@ -114,7 +123,7 @@ export const useChat = () => {
       socket.off(SOCKET_MESSAGE_SEEN_UPDATE, handleMessageSeenUpdate);
       socket.off(SOCKET_CONVERSATION_MESSAGES_SEEN_UPDATE, handleConversationMessagesSeenUpdate);
     };
-  }, [socket, dispatch, markMessageSeen, activeConversation, currentUserId]);
+  }, [socket, dispatch]);
 
   const emitJoinRoom = useCallback(
     (roomId: string) => {

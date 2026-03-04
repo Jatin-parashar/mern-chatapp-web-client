@@ -48,14 +48,12 @@ const ConversationItem = memo(function ConversationItem({ conversation, isActive
     ? formatDistanceToNow(new Date(lastMessage.createdAt))
     : "";
   
-  const unseenMessages = conversation.lastMessage && 
-    conversation.lastMessage.sender._id !== currentUserId &&
+  const unreadCount = conversation.lastMessage &&
+    conversation.lastMessage.sender?._id !== currentUserId &&
     !conversation.lastMessage.seenBy.some(user => {
       const userId = typeof user === 'string' ? user : user._id;
       return userId === currentUserId;
-    });
-  
-  const unreadCount = unseenMessages ? 1 : 0;
+    }) ? 1 : 0;
 
   return (
     <div

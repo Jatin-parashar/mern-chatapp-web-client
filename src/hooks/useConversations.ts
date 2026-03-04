@@ -21,12 +21,7 @@ export const useConversations = () => {
   }, [data, dispatch]);
 
   const sortedConversations = useMemo(() => {
-    return sortByDate(
-      Object.values(conversations).map(conv => ({
-        ...conv,
-        updatedAt: conv.lastMessage?.createdAt || conv.updatedAt
-      }))
-    );
+    return sortByDate(Object.values(conversations));
   }, [conversations]);
 
   return {

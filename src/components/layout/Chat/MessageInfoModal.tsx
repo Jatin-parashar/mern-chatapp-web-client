@@ -33,9 +33,12 @@ export default function MessageInfoModal({ message, open, onOpenChange }: Messag
 
   const seenIds = new Set(seenByUsers.map(u => u._id));
 
-  const deliveredToUsers = latestMessage.deliveredTo
-    ?.map(user => typeof user === 'string' ? allRecipients.find(p => p._id === user) ?? null : user)
-    .filter((user): user is NonNullable<typeof user> => !!user && user._id !== latestMessage.sender._id && !seenIds.has(user._id)) || [];
+  const deliveredIds = new Set(
+    (latestMessage.deliveredTo || []).map(u => typeof u === 'string' ? u : u._id)
+  );
+
+  const deliveredToUsers = allRecipients
+    .filter(p => deliveredIds.has(p._id) && !seenIds.has(p._id));
 
   const UserRow = ({ user }: { user: any }) => (
     <div className="flex items-center gap-3">
@@ -83,7 +86,7 @@ export default function MessageInfoModal({ message, open, onOpenChange }: Messag
                   </div>
                   {seenIds.has(user._id) ? (
                     <CheckCheck className="h-4 w-4 text-blue-500 shrink-0" />
-                  ) : deliveredToUsers.find(d => d._id === user._id) ? (
+                  ) : deliveredIds.has(user._id) ? (
                     <CheckCheck className="h-4 w-4 text-muted-foreground shrink-0" />
                   ) : (
                     <Check className="h-4 w-4 text-muted-foreground shrink-0" />
