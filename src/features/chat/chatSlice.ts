@@ -97,6 +97,13 @@ const chatSlice = createSlice({
           }
         }
       });
+
+      if (state.activeConversation?.lastMessage?._id === messageId) {
+        const lastMsg = state.activeConversation.lastMessage;
+        if (!lastMsg.deliveredTo.some(user => (typeof user === 'string' ? user : user._id) === userId)) {
+          lastMsg.deliveredTo.push(userId);
+        }
+      }
     },
     updateMessageSeenStatus: (state, action: PayloadAction<{ messageId: string; userId: string }>) => {
       const { messageId, userId } = action.payload;
@@ -117,6 +124,13 @@ const chatSlice = createSlice({
           }
         }
       });
+
+      if (state.activeConversation?.lastMessage?._id === messageId) {
+        const lastMsg = state.activeConversation.lastMessage;
+        if (!lastMsg.seenBy.some(user => (typeof user === 'string' ? user : user._id) === userId)) {
+          lastMsg.seenBy.push(userId);
+        }
+      }
     },
     updateConversationMessagesSeenStatus: (state, action: PayloadAction<{ 
       conversationId: string; 
@@ -138,6 +152,16 @@ const chatSlice = createSlice({
           lastMsg.seenBy.push(userId);
         }
       }
+
+      if (
+        state.activeConversation?._id === conversationId &&
+        state.activeConversation.lastMessage
+      ) {
+        const lastMsg = state.activeConversation.lastMessage;
+        if (!lastMsg.seenBy.some(user => (typeof user === 'string' ? user : user._id) === userId)) {
+          lastMsg.seenBy.push(userId);
+        }
+      }
     },
     markConversationMessagesAsSeen: (state, action: PayloadAction<{ 
       conversationId: string; 
@@ -153,6 +177,30 @@ const chatSlice = createSlice({
           msg.seenBy.push(userId);
         }
       });
+
+      // Also update lastMessage on the conversation so ticks re-render
+      if (state.conversations[conversationId]?.lastMessage) {
+        const lastMsg = state.conversations[conversationId].lastMessage!;
+        if (
+          lastMsg.sender._id !== userId &&
+          !lastMsg.seenBy.some(user => (typeof user === 'string' ? user : user._id) === userId)
+        ) {
+          lastMsg.seenBy.push(userId);
+        }
+      }
+
+      if (
+        state.activeConversation?._id === conversationId &&
+        state.activeConversation.lastMessage
+      ) {
+        const lastMsg = state.activeConversation.lastMessage;
+        if (
+          lastMsg.sender._id !== userId &&
+          !lastMsg.seenBy.some(user => (typeof user === 'string' ? user : user._id) === userId)
+        ) {
+          lastMsg.seenBy.push(userId);
+        }
+      }
     },
     setTypingStatus: (state, action: PayloadAction<{ 
       conversationId: string; 

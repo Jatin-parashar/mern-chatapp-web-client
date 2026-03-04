@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import type { RootState } from "../../../app/store";
 import { cn } from "../../../lib/utils";
 import { Check, CheckCheck, Info, Reply } from "lucide-react";
-import { memo, useMemo, useState } from "react";
+import { memo, useMemo } from "react";
 import { AttachmentRenderer } from "../../common/AttachmentRenderer";
 import { getInitials } from "../../../utils/helpers";
 import { Button } from "../../ui/button";
