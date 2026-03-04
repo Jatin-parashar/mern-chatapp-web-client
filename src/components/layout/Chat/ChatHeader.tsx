@@ -125,8 +125,9 @@ export default function ChatHeader({ onViewProfile }: ChatHeaderProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleViewProfile}>View Profile</DropdownMenuItem>
-              <DropdownMenuItem>Mute Notifications</DropdownMenuItem>
+              {!activeConversation.isGroup && (
+                <DropdownMenuItem onClick={handleViewProfile}>View Profile</DropdownMenuItem>
+              )}
               <DropdownMenuItem className="text-red-600">Delete Chat</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

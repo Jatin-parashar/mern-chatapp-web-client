@@ -20,7 +20,8 @@ interface GroupCreationModalProps {
 }
 
 export default function GroupCreationModal({ open, onOpenChange }: GroupCreationModalProps) {
-  const currentUserId = useSelector((state: RootState) => state.user._id);
+  const currentUser = useSelector((state: RootState) => state.user);
+  const currentUserId = currentUser._id;
   const dispatch = useDispatch();
   const [groupName, setGroupName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,8 +44,8 @@ export default function GroupCreationModal({ open, onOpenChange }: GroupCreation
   };
 
   const handleCreate = async () => {
-    if (!groupName.trim() || selectedUsers.length < 2) {
-      showToast.error("Group name and at least 2 members required");
+    if (!groupName.trim() || selectedUsers.length < 1) {
+      showToast.error("Group name and at least 1 other member required");
       return;
     }
 
@@ -96,8 +97,14 @@ export default function GroupCreationModal({ open, onOpenChange }: GroupCreation
             />
           </div>
 
-          {selectedUsers.length > 0 && (
-            <div className="flex flex-wrap gap-2 p-2 rounded-lg border border-border bg-accent/30">
+          <div className="flex flex-wrap gap-2 p-2 rounded-lg border border-border bg-accent/30">
+              <div className="flex items-center gap-1.5 bg-indigo-600/10 border border-indigo-600/30 rounded-full pl-1 pr-2 py-1">
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={currentUser.profilePic} />
+                  <AvatarFallback className="text-[10px] bg-linear-to-br from-indigo-500 to-purple-600 text-white">{getInitials(currentUser.name)}</AvatarFallback>
+                </Avatar>
+                <span className="text-xs font-medium text-indigo-600">You</span>
+              </div>
               {selectedUsers.map(user => (
                 <div key={user._id} className="flex items-center gap-1.5 bg-background border border-border rounded-full pl-1 pr-2 py-1">
                   <Avatar className="h-5 w-5">
@@ -114,7 +121,6 @@ export default function GroupCreationModal({ open, onOpenChange }: GroupCreation
                 </div>
               ))}
             </div>
-          )}
 
           <div className="rounded-lg border border-border overflow-hidden">
             {searching ? (
@@ -123,7 +129,7 @@ export default function GroupCreationModal({ open, onOpenChange }: GroupCreation
               </div>
             ) : searchResults?.data?.data?.length ? (
               <div className="max-h-52 overflow-y-auto divide-y divide-border">
-                {searchResults.data.data.map((user: any) => {
+                {searchResults.data.data.filter((user: any) => user._id !== currentUserId).map((user: any) => {
                   const isSelected = !!selectedUsers.find(u => u._id === user._id);
                   return (
                     <div
@@ -157,7 +163,7 @@ export default function GroupCreationModal({ open, onOpenChange }: GroupCreation
 
           <Button
             onClick={handleCreate}
-            disabled={creating || !groupName.trim() || selectedUsers.length < 2}
+            disabled={creating || !groupName.trim() || selectedUsers.length < 1}
             className="w-full"
           >
             {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create Group"}

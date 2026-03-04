@@ -26,6 +26,8 @@ const MessageBubble = memo(function MessageBubble({ message, onShowInfo, onReply
     return allMessages.find(m => m._id === replyId);
   }, [message.replyTo, allMessages]);
 
+  const activeConversation = useSelector((state: RootState) => state.chat.activeConversation);
+
   const { isOwnMessage, isSeen, isDelivered, hasAttachments } = useMemo(() => {
     const isOwn = message.sender._id === currentUserId;
     
@@ -33,22 +35,24 @@ const MessageBubble = memo(function MessageBubble({ message, onShowInfo, onReply
       return { isOwnMessage: false, isSeen: false, isDelivered: false, hasAttachments: message.attachments && message.attachments.length > 0 };
     }
     
-    const deliveredToOthers = (message.deliveredTo || []).filter(user => {
-      const userId = typeof user === 'string' ? user : user._id;
-      return userId !== currentUserId;
-    });
-    
-    const seenByOthers = (message.seenBy || []).filter(user => {
-      const userId = typeof user === 'string' ? user : user._id;
-      return userId !== currentUserId;
-    });
-    
-    const seen = seenByOthers.length > 0;
-    const delivered = deliveredToOthers.length > 0 && !seen;
+    const otherId = (u: string | { _id: string }) => typeof u === 'string' ? u : u._id;
+
+    const otherParticipants = (activeConversation?.participants || [])
+      .map(p => p._id)
+      .filter(id => id !== currentUserId);
+
+    const seenByOthers = (message.seenBy || []).map(otherId).filter(id => id !== currentUserId);
+    const deliveredToOthers = (message.deliveredTo || []).map(otherId).filter(id => id !== currentUserId);
+
+    // ALL other participants must have seen → blue ticks
+    const seen = otherParticipants.length > 0 && otherParticipants.every(id => seenByOthers.includes(id));
+
+    // ALL other participants must have received → grey double ticks (only if not fully seen)
+    const delivered = !seen && otherParticipants.length > 0 && otherParticipants.every(id => deliveredToOthers.includes(id) || seenByOthers.includes(id));
     const hasAttach = message.attachments && message.attachments.length > 0;
     
     return { isOwnMessage: true, isSeen: seen, isDelivered: delivered, hasAttachments: hasAttach };
-  }, [message, currentUserId]);
+  }, [message, currentUserId, activeConversation]);
 
   return (
     <div className={cn("flex gap-1.5 sm:gap-2 mb-3 sm:mb-4", isOwnMessage && "flex-row-reverse")}>

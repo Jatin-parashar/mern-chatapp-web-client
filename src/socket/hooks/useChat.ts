@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../app/store";
+import { toast } from "sonner";
 import {
   addMessage,
   addConversation,
@@ -64,6 +65,10 @@ export const useChat = () => {
             message.content || "Sent an attachment",
             message.sender.profilePic
           );
+        } else {
+          toast(`${message.sender.name}: ${message.content || "Sent an attachment"}`, {
+            duration: 3000,
+          });
         }
       }
     };
