@@ -92,10 +92,10 @@ export default function CallModal() {
 
   return (
     <Dialog open={isCallActive || !!incomingCall} onOpenChange={(open) => !open && endCall()}>
-      <DialogContent className="max-w-6xl h-[90vh] p-0 bg-black border-none">
+      <DialogContent className="max-w-6xl h-[90vh] p-0 bg-black border-none overflow-hidden">
         {/* Incoming Call UI */}
         {incomingCall && callStatus === "ringing" && (
-          <div className="flex-1 flex flex-col items-center justify-center gap-6 sm:gap-8 px-4">
+          <div className="flex-1 flex flex-col items-center justify-center gap-6 sm:gap-8 px-4 overflow-y-auto">
             <Avatar className="h-24 w-24 sm:h-32 sm:w-32">
               <AvatarImage src={incomingCall.callerInfo.profilePic || ""} />
               <AvatarFallback className="text-4xl bg-linear-to-br from-indigo-500 to-purple-600">
@@ -175,7 +175,7 @@ export default function CallModal() {
                   )}
                 </div>
 
-                <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 w-24 h-32 sm:w-48 sm:h-36 rounded-lg overflow-hidden border-2 border-white shadow-lg">
+                <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 w-24 sm:w-40 aspect-video rounded-lg overflow-hidden border-2 border-white shadow-lg">
                   <video
                     ref={localVideoRef}
                     autoPlay

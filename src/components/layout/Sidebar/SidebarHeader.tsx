@@ -28,14 +28,14 @@ export default function SidebarHeader({ onLogout, onProfileClick, showBackButton
   const [showGroupModal, setShowGroupModal] = useState(false);
 
   return (
-    <div className="h-14 sm:h-16 p-4 border-b border-border">
+    <div className="h-14 sm:h-16 p-4 border-b border-border overflow-hidden">
       <div className="flex items-center justify-between">
         {showBackButton ? (
           <Button variant="ghost" size="icon" onClick={onBack}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
         ) : (
-          <h2 className="text-base sm:text-xl font-bold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          <h2 className="text-base sm:text-xl font-bold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent truncate min-w-0">
             Elevate Messaging
           </h2>
         )}

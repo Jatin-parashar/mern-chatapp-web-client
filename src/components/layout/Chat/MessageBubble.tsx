@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import type { RootState } from "../../../app/store";
 import { cn } from "../../../lib/utils";
 import { Check, CheckCheck, Info, Reply } from "lucide-react";
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 import { AttachmentRenderer } from "../../common/AttachmentRenderer";
 import { getInitials } from "../../../utils/helpers";
 import { Button } from "../../ui/button";
@@ -77,7 +77,11 @@ const MessageBubble = memo(function MessageBubble({ message, onShowInfo, onReply
         
         <div className="relative">
           {onShowInfo && (
-            <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-10">
+            <div className={cn(
+              "absolute -top-2 flex gap-1 z-10 transition-opacity",
+              isOwnMessage ? "right-1" : "left-1",
+              "opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+            )}>
               {onReply && (
                 <Button
                   onClick={() => onReply(message)}

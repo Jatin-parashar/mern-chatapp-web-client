@@ -13,7 +13,7 @@ interface AuthLayoutProps {
 
 export const AuthLayout = ({ children, title, subtitle, heroTitle, heroDescription, features }: AuthLayoutProps) => (
   <div className="h-screen w-full flex overflow-hidden bg-linear-to-br from-indigo-50 via-white to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-    <div className="hidden lg:flex lg:w-1/2 bg-linear-to-br from-indigo-600 via-purple-600 to-pink-600 relative">
+    <div className="hidden md:flex md:w-2/5 lg:w-1/2 bg-linear-to-br from-indigo-600 via-purple-600 to-pink-600 relative">
       <div className="absolute inset-0 bg-black/10" />
       <div className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-20 right-20 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "700ms" }} />
@@ -49,9 +49,9 @@ export const AuthLayout = ({ children, title, subtitle, heroTitle, heroDescripti
       </div>
     </div>
 
-    <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 lg:p-8 overflow-y-auto h-screen">
+    <div className="w-full md:w-3/5 lg:w-1/2 flex items-center justify-center p-4 sm:p-6 lg:p-8 overflow-y-auto min-h-screen">
       <div className="w-full max-w-md space-y-6">
-        <div className="lg:hidden flex justify-center mb-8">
+        <div className="md:hidden flex justify-center mb-8">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-linear-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center">
               <Sparkles className="w-6 h-6 text-white" />

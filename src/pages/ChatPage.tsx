@@ -30,7 +30,7 @@ export default function ChatPage() {
         <meta property="og:description" content="Real-time messaging, video calls, and file sharing" />
         <meta property="og:url" content={window.location.origin} />
       </Helmet>
-      <div className="h-screen w-screen flex overflow-hidden">
+      <div className="h-screen h-[100dvh] w-screen flex overflow-hidden">
         <div className={`${activeConversation ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96`}>
           <Sidebar profileUser={profileUser} onCloseProfile={handleCloseProfile} />
         </div>

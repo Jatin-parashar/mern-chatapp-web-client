@@ -57,7 +57,7 @@ export default function MessageInfoModal({ message, open, onOpenChange }: Messag
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-md">
+      <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Message Info</DialogTitle>
           <DialogDescription>View delivery and read status</DialogDescription>
@@ -103,7 +103,7 @@ export default function MessageInfoModal({ message, open, onOpenChange }: Messag
               
               <TabsContent value="delivered" className="mt-4">
                 {deliveredToUsers.length > 0 ? (
-                  <div className="space-y-2">
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
                     {deliveredToUsers.map((user: any) => <UserRow key={user._id} user={user} />)}
                   </div>
                 ) : (
@@ -113,7 +113,7 @@ export default function MessageInfoModal({ message, open, onOpenChange }: Messag
               
               <TabsContent value="seen" className="mt-4">
                 {seenByUsers.length > 0 ? (
-                  <div className="space-y-2">
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
                     {seenByUsers.map((user: any) => <UserRow key={user._id} user={user} />)}
                   </div>
                 ) : (

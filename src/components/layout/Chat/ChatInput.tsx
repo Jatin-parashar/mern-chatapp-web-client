@@ -298,7 +298,7 @@ export default function ChatInput({ replyingTo, onCancelReply }: ChatInputProps)
 
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="shrink-0 h-9 w-9 sm:h-10 sm:w-10 hidden sm:flex">
+            <Button variant="ghost" size="icon" className="shrink-0 h-9 w-9 sm:h-10 sm:w-10">
               <Smile className="h-5 w-5" />
             </Button>
           </PopoverTrigger>
@@ -307,7 +307,7 @@ export default function ChatInput({ replyingTo, onCancelReply }: ChatInputProps)
               onEmojiClick={onEmojiClick}
               theme={(theme === 'dark' ? 'dark' : 'light') as any}
               width="100%"
-              height="400px"
+              height="clamp(280px, 50vh, 400px)"
             />
           </PopoverContent>
         </Popover>

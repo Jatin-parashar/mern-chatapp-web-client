@@ -24,6 +24,7 @@ export const AttachmentRenderer = memo(({ attachment }: AttachmentRendererProps)
         loading="lazy"
         className="max-w-full max-h-80 rounded-lg cursor-pointer hover:opacity-90"
         onClick={() => window.open(attachment.url, '_blank')}
+        onError={(e) => { e.currentTarget.style.display = 'none'; }}
       />
     );
   }

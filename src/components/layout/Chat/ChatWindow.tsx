@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useLazyGetMessagesByCursorQuery } from "../../../features/chat/chatApi";
-import { setMessages } from "../../../features/chat/chatSlice";
+import { setMessages, setActiveConversation } from "../../../features/chat/chatSlice";
 import { useChat } from "../../../socket/hooks/useChat";
 import { useTyping } from "../../../socket/hooks/useTyping";
 import type { RootState } from "../../../app/store";
@@ -143,6 +143,12 @@ export default function ChatWindow() {
           </div>
           <h3 className="text-lg font-semibold mb-2">Select a conversation</h3>
           <p className="text-sm text-muted-foreground">Choose a chat to start messaging</p>
+          <button
+            className="mt-4 md:hidden text-sm text-indigo-600 underline"
+            onClick={() => dispatch(setActiveConversation(null as any))}
+          >
+            ← Back to chats
+          </button>
         </div>
       </div>
     );
