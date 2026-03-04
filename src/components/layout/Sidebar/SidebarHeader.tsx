@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import { UserPlus } from "lucide-react";
+import { UserPlus, ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import type { RootState } from "../../../app/store";
 import { Button } from "../../ui/button";
 import { ModeToggle } from "../../theme/mode-toggle";
 import GroupCreationModal from "./GroupCreationModal";
+import { getInitials } from "../../../utils/helpers";
 
 interface SidebarHeaderProps {
   onLogout: () => void;
@@ -21,15 +22,6 @@ interface SidebarHeaderProps {
   showBackButton?: boolean;
   onBack?: () => void;
 }
-
-const getInitials = (name: string): string => {
-  return name
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-};
 
 export default function SidebarHeader({ onLogout, onProfileClick, showBackButton, onBack }: SidebarHeaderProps) {
   const user = useSelector((state: RootState) => state.user);
@@ -39,8 +31,8 @@ export default function SidebarHeader({ onLogout, onProfileClick, showBackButton
     <div className="h-14 sm:h-16 p-4 border-b border-border">
       <div className="flex items-center justify-between">
         {showBackButton ? (
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-xs sm:text-sm">
-            ← Back
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <ArrowLeft className="h-5 w-5" />
           </Button>
         ) : (
           <h2 className="text-base sm:text-xl font-bold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">

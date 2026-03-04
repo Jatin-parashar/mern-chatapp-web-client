@@ -6,21 +6,13 @@ import { useSelector } from "react-redux";
 import type { RootState } from "../../../app/store";
 import { cn } from "../../../lib/utils";
 import { memo } from "react";
+import { getInitials } from "../../../utils/helpers";
 
 interface ConversationItemProps {
   conversation: Conversation;
   isActive: boolean;
   onClick: () => void;
 }
-
-const getInitials = (name: string): string => {
-  return name
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-};
 
 const ConversationItem = memo(function ConversationItem({ conversation, isActive, onClick }: ConversationItemProps) {
   const currentUserId = useSelector((state: RootState) => state.user._id);

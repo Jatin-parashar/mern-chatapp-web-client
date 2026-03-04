@@ -1,7 +1,6 @@
 export interface User {
   _id: string;
   name: string;
-  email: string;
   username: string;
   status: string;
   profilePic: string;
@@ -14,7 +13,7 @@ export interface Message {
   conversationId: string;
   sender: User;
   content?: string;
-  messageType: 'text' | 'image' | 'video' | 'audio' | 'document' | 'system';
+  messageType: 'text' | 'image' | 'video' | 'audio' | 'document' | 'file';
   deliveredTo: (string | User)[];
   seenBy: (string | User)[];
   attachments?: MessageAttachment[];

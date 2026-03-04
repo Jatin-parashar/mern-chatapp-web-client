@@ -38,7 +38,6 @@ export const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
-        ignoredPaths: ['call.peer', 'call.localStream', 'call.remoteStream'],
       },
     }).concat(
       authApi.middleware,

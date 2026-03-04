@@ -2,16 +2,20 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRef, useState } from "react";
 import { setActiveConversation } from "../../../features/chat/chatSlice";
 import { useCreateConversationMutation } from "../../../features/chat/chatApi";
+import { useUpdateUserInfoMutation } from "../../../features/user/userApi";
+import { updateStatus } from "../../../features/user/userSlice";
 import type { RootState } from "../../../app/store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import { Button } from "../../ui/button";
+import { Input } from "../../ui/input";
 import SidebarHeader from "./SidebarHeader";
 import SearchBar from "./SearchBar";
 import ConversationItem from "./ConversationItem";
 import UserSearchItem from "./UserSearchItem";
 import { showToast } from "../../../utils/toast";
 import { MessageSquare } from "lucide-react";
+import CallHistory from "../CallHistory";
 import { ScrollArea } from "../../ui/scroll-area";
 import { ConversationSkeleton, UserSearchSkeleton } from "../../ui/LoadingSkeletons";
 import { useLogout } from "../../../hooks/useLogout";
@@ -33,6 +37,8 @@ export default function Sidebar({ profileUser, onCloseProfile }: SidebarProps) {
   const creatingConversationWith = useRef<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState("chats");
   const [showOwnProfile, setShowOwnProfile] = useState(false);
+  const [editingStatus, setEditingStatus] = useState(false);
+  const [statusDraft, setStatusDraft] = useState("");
 
   const showProfile = showOwnProfile || !!profileUser;
   const displayUser = profileUser || currentUser;
@@ -47,6 +53,18 @@ export default function Sidebar({ profileUser, onCloseProfile }: SidebarProps) {
   const { conversations, isLoading: loadingConversations, refetch } = useConversations();
   const { query, setQuery, clearSearch, users, isLoading: searchingUsers } = useUserSearch();
   const [createConversation] = useCreateConversationMutation();
+  const [updateUserInfo, { isLoading: updatingStatus }] = useUpdateUserInfoMutation();
+
+  const handleSaveStatus = async () => {
+    try {
+      await updateUserInfo({ status: statusDraft.trim() }).unwrap();
+      dispatch(updateStatus({ status: statusDraft.trim() }));
+      setEditingStatus(false);
+      showToast.success("Status updated");
+    } catch (error: any) {
+      showToast.error(error?.data?.message || "Failed to update status");
+    }
+  };
 
   const handleConversationClick = (conversationId: string) => {
     const conversation = Object.values(allConversations).find((c) => c._id === conversationId);
@@ -71,8 +89,6 @@ export default function Sidebar({ profileUser, onCloseProfile }: SidebarProps) {
       }
 
       creatingConversationWith.current.add(userId);
-
-      console.log('Creating conversation with:', { currentUserId, userId, participants: [currentUserId, userId] });
 
       const result = await createConversation({
         participants: [currentUserId, userId],
@@ -117,29 +133,57 @@ export default function Sidebar({ profileUser, onCloseProfile }: SidebarProps) {
               </div>
               
               <div className="space-y-4">
-                {displayUser.email && (
+                {displayUser.status && (
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Email</p>
-                    <p className="text-sm">{displayUser.email}</p>
+                    <p className="text-xs text-muted-foreground mb-1">Status</p>
+                    <p className="text-sm">{displayUser.status}</p>
                   </div>
                 )}
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Status</p>
-                  <p className="text-sm">{displayUser.status}</p>
-                </div>
               </div>
               
               {displayUser._id === currentUserId && (
-                <Button variant="outline" className="w-full">Edit Profile</Button>
+                <div className="space-y-2">
+                  {editingStatus ? (
+                    <div className="flex gap-2">
+                      <Input
+                        value={statusDraft}
+                        onChange={(e) => setStatusDraft(e.target.value)}
+                        maxLength={200}
+                        placeholder="What's on your mind?"
+                        className="flex-1 h-9 text-sm"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveStatus();
+                          if (e.key === 'Escape') setEditingStatus(false);
+                        }}
+                      />
+                      <Button size="sm" onClick={handleSaveStatus} disabled={updatingStatus} className="h-9">
+                        Save
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingStatus(false)} className="h-9">
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => { setStatusDraft(currentUser.status || ""); setEditingStatus(true); }}
+                    >
+                      Edit Status
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           </ScrollArea>
         </div>
       ) : (
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="chats" className="text-xs sm:text-sm">Chats</TabsTrigger>
           <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
+          <TabsTrigger value="calls" className="text-xs sm:text-sm">Calls</TabsTrigger>
         </TabsList>
         
         <TabsContent value="chats" className="flex-1 overflow-hidden mt-0">
@@ -173,6 +217,14 @@ export default function Sidebar({ profileUser, onCloseProfile }: SidebarProps) {
           </div>
         </TabsContent>
         
+        <TabsContent value="calls" className="flex-1 overflow-hidden mt-0">
+          <div className="h-full overflow-hidden">
+            <ScrollArea className="h-full">
+              <CallHistory />
+            </ScrollArea>
+          </div>
+        </TabsContent>
+
         <TabsContent value="users" className="flex-1 overflow-hidden mt-0">
           <div className="h-full flex flex-col">
             <div className="p-3">

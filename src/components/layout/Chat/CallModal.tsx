@@ -4,12 +4,9 @@ import { Phone, Video, PhoneOff, Mic, MicOff, VideoOff, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import { Button } from "../../ui/button";
 import { Dialog, DialogContent } from "../../ui/dialog";
-import { useCall } from "../../../socket/hooks/useCall";
+import { useCall, getCallStreams } from "../../../socket/hooks/useCall";
 import type { RootState } from "../../../app/store";
-
-const getInitials = (name: string): string => {
-  return name.split(" ").map((word) => word[0]).join("").toUpperCase().slice(0, 2);
-};
+import { getInitials } from "../../../utils/helpers";
 
 export default function CallModal() {
   const { answerCall, endCall, declineCall, toggleAudio, toggleVideo } = useCall();
@@ -17,8 +14,6 @@ export default function CallModal() {
     isCallActive,
     callStatus,
     incomingCall,
-    localStream,
-    remoteStream,
     isVideoCall,
     receiverInfo,
     isAudioEnabled,
@@ -29,59 +24,62 @@ export default function CallModal() {
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const [callDuration, setCallDuration] = useState(0);
   const callTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Tick to force re-render when streams arrive (refs don't trigger renders)
+  const [streamTick, setStreamTick] = useState(0);
+
+  // Poll for stream availability when call is active
+  useEffect(() => {
+    if (!isCallActive) return;
+    const interval = setInterval(() => {
+      const { localStream, remoteStream } = getCallStreams();
+      if (localStream || remoteStream) {
+        setStreamTick((t) => t + 1);
+      }
+    }, 200);
+    return () => clearInterval(interval);
+  }, [isCallActive]);
 
   useEffect(() => {
     return () => {
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = null;
-      }
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = null;
-      }
+      if (localVideoRef.current) localVideoRef.current.srcObject = null;
+      if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
     };
   }, []);
 
   useEffect(() => {
     if (callStatus === "connected") {
-      callTimerRef.current = setInterval(() => {
-        setCallDuration((prev) => prev + 1);
-      }, 1000);
+      callTimerRef.current = setInterval(() => setCallDuration((p) => p + 1), 1000);
     } else {
       if (callTimerRef.current) {
         clearInterval(callTimerRef.current);
         setCallDuration(0);
       }
     }
-    return () => {
-      if (callTimerRef.current) clearInterval(callTimerRef.current);
-    };
+    return () => { if (callTimerRef.current) clearInterval(callTimerRef.current); };
   }, [callStatus]);
 
+  // Attach streams to video elements whenever streamTick changes
   useEffect(() => {
-    if (localVideoRef.current && localStream) {
-      localVideoRef.current.srcObject = localStream;
-      localVideoRef.current.play().catch(err => {
-        if (import.meta.env.DEV) {
-          console.error("Local video play error:", err);
-        }
-      });
-    } else if (localVideoRef.current && !localStream) {
-      localVideoRef.current.srcObject = null;
-    }
-  }, [localStream]);
+    const { localStream, remoteStream } = getCallStreams();
 
-  useEffect(() => {
-    if (remoteVideoRef.current && remoteStream) {
-      remoteVideoRef.current.srcObject = remoteStream;
-      remoteVideoRef.current.play().catch(err => {
-        if (import.meta.env.DEV) {
-          console.error("Remote video play error:", err);
-        }
-      });
-    } else if (remoteVideoRef.current && !remoteStream) {
-      remoteVideoRef.current.srcObject = null;
+    if (localVideoRef.current) {
+      if (localStream && localVideoRef.current.srcObject !== localStream) {
+        localVideoRef.current.srcObject = localStream;
+        localVideoRef.current.play().catch(() => {});
+      } else if (!localStream) {
+        localVideoRef.current.srcObject = null;
+      }
     }
-  }, [remoteStream]);
+
+    if (remoteVideoRef.current) {
+      if (remoteStream && remoteVideoRef.current.srcObject !== remoteStream) {
+        remoteVideoRef.current.srcObject = remoteStream;
+        remoteVideoRef.current.play().catch(() => {});
+      } else if (!remoteStream) {
+        remoteVideoRef.current.srcObject = null;
+      }
+    }
+  }, [streamTick, callStatus]);
 
   const formatCallDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -89,6 +87,7 @@ export default function CallModal() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const { remoteStream } = getCallStreams();
   const participantInfo = incomingCall?.callerInfo || receiverInfo;
 
   return (
@@ -157,7 +156,6 @@ export default function CallModal() {
             {/* Video Container */}
             {isVideoCall && (
               <div className="flex-1 relative">
-                {/* Remote Video */}
                 <div className="absolute inset-0">
                   <video
                     ref={remoteVideoRef}
@@ -177,7 +175,6 @@ export default function CallModal() {
                   )}
                 </div>
 
-                {/* Local Video */}
                 <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 w-24 h-32 sm:w-48 sm:h-36 rounded-lg overflow-hidden border-2 border-white shadow-lg">
                   <video
                     ref={localVideoRef}
@@ -186,7 +183,7 @@ export default function CallModal() {
                     muted
                     className="w-full h-full object-cover scale-x-[-1]"
                   />
-                  {(!localStream || !isVideoEnabled) && (
+                  {!isVideoEnabled && (
                     <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
                       <Avatar className="h-16 w-16">
                         <AvatarFallback className="bg-linear-to-br from-indigo-500 to-purple-600">

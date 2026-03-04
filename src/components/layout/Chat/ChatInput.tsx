@@ -55,7 +55,7 @@ export default function ChatInput({ replyingTo, onCancelReply }: ChatInputProps)
     if (activeConversation && !isLoading && !uploading) {
       inputRef.current?.focus();
     }
-  }, [activeConversation, isLoading, uploading]);
+  }, [activeConversation, isLoading, uploading, replyingTo]);
 
   useEffect(() => {
     return () => {

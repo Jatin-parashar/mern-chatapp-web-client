@@ -1,24 +1,18 @@
 import { useLoginMutation } from "../features/auth/authApi";
-import { useDispatch } from "react-redux";
-import { setCredentials } from "../features/auth/authSlice";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
-import { useLazyGetUserByIdQuery } from "../features/user/userApi";
-import { updateUser } from "../features/user/userSlice";
+import { Link } from "react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Loader2, LogIn, Mail, Lock, Sparkles } from "lucide-react";
-import { authToasts, showToast } from "../utils/toast";
-import type { AuthData } from "@/types";
+import { showToast } from "../utils/toast";
 import { appTitle } from "@/utils/constants";
 import { Helmet } from "react-helmet";
+import { useAuth } from "../hooks/useAuth";
 
 export default function LoginPage() {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
   const [login, { isLoading }] = useLoginMutation();
-  const [fetchUserById] = useLazyGetUserByIdQuery();
+  const { handleLogin } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,23 +22,11 @@ export default function LoginPage() {
 
     try {
       const result = await login({ email: email.trim(), password }).unwrap();
-      const { user, accessToken, refreshToken } = result.data as AuthData;
-
-      dispatch(setCredentials({ email: user.email, accessToken }));
-      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-
-      const userResult = await fetchUserById(user._id).unwrap();
-      if (userResult.data?.user) {
-        dispatch(updateUser(userResult.data.user));
-        authToasts.loginSuccess(userResult.data.user.name);
-        navigate("/");
-      }
+      await handleLogin(result);
     } catch (error: any) {
       showToast.error(error?.data?.message || "Login failed");
     }
   };
-
-
 
   const isProcessing = isLoading;
 

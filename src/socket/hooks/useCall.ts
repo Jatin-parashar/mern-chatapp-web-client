@@ -12,12 +12,9 @@ import {
   acceptCall,
   connectCall,
   endCall as endCallAction,
-  setLocalStream,
-  setRemoteStream,
-  setPeer,
-  setCallId,
   toggleAudio as toggleAudioAction,
   toggleVideo as toggleVideoAction,
+  setCallId,
 } from "../../features/call/callSlice";
 import { useSocketInstance } from "../SocketContext";
 import {
@@ -38,6 +35,15 @@ import type {
   CallPeerDisconnectedEventData,
 } from "../../types/socket";
 
+// Shared refs — accessible from CallModal via useCall()
+let _localStreamRef: React.MutableRefObject<MediaStream | null>;
+let _remoteStreamRef: React.MutableRefObject<MediaStream | null>;
+
+export const getCallStreams = () => ({
+  localStream: _localStreamRef?.current ?? null,
+  remoteStream: _remoteStreamRef?.current ?? null,
+});
+
 export const useCall = () => {
   const { socket } = useSocketInstance();
   const dispatch = useDispatch();
@@ -45,40 +51,35 @@ export const useCall = () => {
   const currentUser = useSelector((state: RootState) => state.user);
   const activeConversation = useSelector((state: RootState) => state.chat.activeConversation);
   const {
-    peer,
     callId,
     incomingCall,
   } = useSelector((state: RootState) => state.call);
 
   const peerRef = useRef<Instance | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const remoteStreamRef = useRef<MediaStream | null>(null);
   const pendingSignalRef = useRef<SignalData | null>(null);
   const cleanupCallRef = useRef<(() => void) | undefined>(undefined);
   const toastShownRef = useRef(false);
 
-  useEffect(() => {
-    peerRef.current = peer;
-  }, [peer]);
+  // Expose refs globally for CallModal
+  _localStreamRef = localStreamRef;
+  _remoteStreamRef = remoteStreamRef;
 
   // Cleanup function
   const cleanupCall = useCallback(() => {
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => {
-        track.stop();
-        if (import.meta.env.DEV) {
-          console.log('Stopped track:', track.kind);
-        }
-      });
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
       localStreamRef.current = null;
     }
     if (peerRef.current) {
       peerRef.current.destroy();
       peerRef.current = null;
     }
+    if (remoteStreamRef.current) {
+      remoteStreamRef.current = null;
+    }
     pendingSignalRef.current = null;
-    dispatch(setLocalStream(null));
-    dispatch(setRemoteStream(null));
-    dispatch(setPeer(null));
     dispatch(setCallId(null));
   }, [dispatch]);
 
@@ -163,7 +164,6 @@ export const useCall = () => {
         audio: true,
       });
       localStreamRef.current = stream;
-      dispatch(setLocalStream(stream));
       return stream;
     } catch (error) {
       if (import.meta.env.DEV) {
@@ -171,14 +171,14 @@ export const useCall = () => {
       }
       throw error;
     }
-  }, [dispatch]);
+  }, []);
 
   // Create peer connection
   const createPeerConnection = useCallback(
     (initiator: boolean, stream: MediaStream, callId: string) => {
       const peer = new Peer({
         initiator,
-        trickle: false,
+        trickle: true,
         stream,
       });
 
@@ -210,7 +210,7 @@ export const useCall = () => {
       });
 
       peer.on("stream", (remoteStream: MediaStream) => {
-        dispatch(setRemoteStream(remoteStream));
+        remoteStreamRef.current = remoteStream;
         dispatch(connectCall());
       });
 
@@ -252,14 +252,13 @@ export const useCall = () => {
         const stream = await getMediaStream(isVideoCall);
         const peer = createPeerConnection(true, stream, newCallId);
         peerRef.current = peer;
-        dispatch(setPeer(peer));
       } catch (error) {
         if (import.meta.env.DEV) {
           console.error("Error initiating call:", error);
         }
         showToast.error("Failed to access camera/microphone. Please check permissions.");
         
-        if (socket && callId) {
+        if (socket) {
           socket.emit(SOCKET_CALL_ENDED, { callId: newCallId });
         }
         dispatch(endCallAction());
@@ -286,8 +285,7 @@ export const useCall = () => {
       
       const peer = createPeerConnection(false, stream, incomingCall.callId);
       peerRef.current = peer;
-      dispatch(setPeer(peer));
-      
+
       // Signal the offer after peer is created
       if (pendingSignalRef.current) {
         peer.signal(pendingSignalRef.current);

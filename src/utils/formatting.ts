@@ -1,22 +1,19 @@
-import moment from "moment";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
 
 export const formatDistanceToNow = (date: Date): string => {
-  return moment(date).fromNow();
+  return dayjs(date).fromNow();
 };
 
 export const formatMessageTime = (date: Date): string => {
-  const now = moment();
-  const messageDate = moment(date);
+  const now = dayjs();
+  const msg = dayjs(date);
 
-  if (now.isSame(messageDate, "day")) {
-    return messageDate.format("HH:mm");
-  } else if (now.subtract(1, "day").isSame(messageDate, "day")) {
-    return "Yesterday";
-  } else if (now.isSame(messageDate, "year")) {
-    return messageDate.format("MMM D");
-  } else {
-    return messageDate.format("MMM D, YYYY");
-  }
+  if (now.isSame(msg, "day")) return msg.format("HH:mm");
+  if (now.subtract(1, "day").isSame(msg, "day")) return "Yesterday";
+  if (now.isSame(msg, "year")) return msg.format("MMM D");
+  return msg.format("MMM D, YYYY");
 };
 
 export const formatCallDuration = (seconds: number): string => {

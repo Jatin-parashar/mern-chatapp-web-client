@@ -6,16 +6,13 @@ import type { Message } from "../../../types/entities";
 import { formatMessageTime } from "../../../utils/formatting";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../app/store";
+import { getInitials } from "../../../utils/helpers";
 
 interface MessageInfoModalProps {
   message: Message | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-const getInitials = (name: string): string => {
-  return name.split(" ").map((word) => word[0]).join("").toUpperCase().slice(0, 2);
-};
 
 export default function MessageInfoModal({ message, open, onOpenChange }: MessageInfoModalProps) {
   const messages = useSelector((state: RootState) => state.chat.messages);

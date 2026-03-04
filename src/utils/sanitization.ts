@@ -21,6 +21,7 @@ const MIME_TYPE_EXTENSIONS: Record<string, string[]> = {
   'image/webp': ['.webp'],
   'video/mp4': ['.mp4'],
   'video/webm': ['.webm'],
+  'video/quicktime': ['.mov'],
   'audio/mpeg': ['.mp3'],
   'audio/wav': ['.wav'],
   'audio/ogg': ['.ogg'],

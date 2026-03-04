@@ -24,9 +24,10 @@ export const useUserSearch = () => {
   }, [query, debouncedSearch]);
 
   const filteredUsers = useMemo(() => {
+    if (!query.trim()) return [];
     const users = data?.data?.data || [];
     return users.filter((user: any) => user._id !== currentUserId);
-  }, [data, currentUserId]);
+  }, [data, currentUserId, query]);
 
   const clearSearch = useCallback(() => setQuery(""), []);
 

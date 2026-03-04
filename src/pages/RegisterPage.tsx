@@ -1,28 +1,22 @@
 import { useRegisterMutation, useLazyCheckUsernameAvailabilityQuery } from "../features/auth/authApi";
-import { useDispatch } from "react-redux";
-import { setCredentials } from "../features/auth/authSlice";
-import { useLazyGetUserByIdQuery } from "../features/user/userApi";
-import { updateUser } from "../features/user/userSlice";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Loader2, UserPlus, Mail, Lock, User, MessageSquare, Camera, Sparkles, Check, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
-import { authToasts, showToast } from "../utils/toast";
-import type { AuthData } from "@/types";
+import { showToast } from "../utils/toast";
 import { appTitle } from "@/utils/constants";
 import { Helmet } from "react-helmet";
 import { debounce } from "../utils/debounce";
 import { TIMING_CONFIG } from "../config/constants";
+import { useAuth } from "../hooks/useAuth";
 
 export default function RegisterPage() {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
   const [register, { isLoading }] = useRegisterMutation();
-  const [fetchUserById] = useLazyGetUserByIdQuery();
   const [checkUsername, { data: usernameCheck }] = useLazyCheckUsernameAvailabilityQuery();
+  const { handleRegister } = useAuth();
 
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
@@ -91,17 +85,7 @@ export default function RegisterPage() {
     
     try {
       const result = await register(formData).unwrap();
-      const { user, accessToken, refreshToken } = result.data as AuthData;
-      
-      dispatch(setCredentials({ email: user.email, accessToken }));
-      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-      
-      const userResult = await fetchUserById(user._id).unwrap();
-      if (userResult.data?.user) {
-        dispatch(updateUser(userResult.data.user));
-        authToasts.registerSuccess(userResult.data.user.name);
-        navigate("/");
-      }
+      await handleRegister(result);
     } catch (error: any) {
       showToast.error(error?.data?.message || "Registration failed");
     }

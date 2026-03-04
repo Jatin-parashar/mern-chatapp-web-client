@@ -5,9 +5,10 @@ import { Phone, Video, PhoneMissed, PhoneIncoming, PhoneOutgoing } from "lucide-
 import { useSelector } from "react-redux";
 import type { RootState } from "../../app/store";
 import { getInitials } from "../../utils/helpers";
-import { ScrollArea } from "../ui/scroll-area";
 import { Skeleton } from "../ui/skeleton";
-import moment from "moment";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
 
 export default function CallHistory() {
   const { data, isLoading } = useGetCallHistoryQuery();
@@ -41,14 +42,14 @@ export default function CallHistory() {
 
   if (isLoading) {
     return (
-      <div className="p-4 space-y-3">
+      <div className="p-3 space-y-2">
         {[...Array(5)].map((_, i) => (
-          <Card key={i} className="p-4">
+          <Card key={i} className="p-3">
             <div className="flex items-center gap-3">
-              <Skeleton className="h-12 w-12 rounded-full" />
+              <Skeleton className="h-10 w-10 rounded-full shrink-0" />
               <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-3.5 w-28" />
+                <Skeleton className="h-3 w-20" />
               </div>
             </div>
           </Card>
@@ -60,17 +61,15 @@ export default function CallHistory() {
   const calls = data?.data?.data || [];
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b">
-        <h2 className="text-xl font-semibold">Call History</h2>
+    <div>
+      <div className="p-4 border-b border-border">
+        <h2 className="text-base font-semibold">Call History</h2>
       </div>
-      
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-2">
+      <div className="p-3 space-y-2">
           {calls.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <Phone className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No call history</p>
+              <Phone className="h-10 w-10 mx-auto mb-3 opacity-40" />
+              <p className="text-sm">No call history</p>
             </div>
           ) : (
             calls.map((call: any) => {
@@ -78,39 +77,36 @@ export default function CallHistory() {
               return (
                 <Card key={call._id} className="p-3 hover:bg-accent/50 transition-colors cursor-pointer">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
+                    <Avatar className="h-10 w-10 shrink-0">
                       <AvatarImage src={otherUser.profilePic} alt={otherUser.name} />
-                      <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                      <AvatarFallback className="bg-linear-to-br from-indigo-500 to-purple-600 text-white text-sm">
                         {getInitials(otherUser.name)}
                       </AvatarFallback>
                     </Avatar>
-                    
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         {getCallIcon(call)}
-                        <p className="font-medium truncate">{otherUser.name}</p>
+                        <p className="font-medium text-sm truncate">{otherUser.name}</p>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{moment(call.createdAt).fromNow()}</span>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                        <span>{dayjs(call.createdAt).fromNow()}</span>
                         {call.status === 'ended' && call.duration > 0 && (
                           <>
-                            <span>•</span>
+                            <span>·</span>
                             <span>{formatDuration(call.duration)}</span>
                           </>
                         )}
                       </div>
                     </div>
-                    
-                    <div className="text-xs text-muted-foreground capitalize">
+                    <span className="text-xs text-muted-foreground capitalize shrink-0">
                       {call.status}
-                    </div>
+                    </span>
                   </div>
                 </Card>
               );
             })
           )}
-        </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }

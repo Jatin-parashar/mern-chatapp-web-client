@@ -1,5 +1,5 @@
 export type CallStatus = "idle" | "calling" | "ringing" | "connecting" | "connected" | "ended";
-export type MessageType = "text" | "image" | "video" | "audio" | "document" | "system";
+export type MessageType = "text" | "image" | "video" | "audio" | "document" | "file";
 export type UserStatus = "online" | "offline" | "away" | "busy";
 
 export interface PaginationParams {

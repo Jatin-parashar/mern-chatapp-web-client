@@ -4,20 +4,12 @@ import { MessageSquare } from "lucide-react";
 import type { User } from "../../../types/entities";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../app/store";
+import { getInitials } from "../../../utils/helpers";
 
 interface UserSearchItemProps {
   user: User;
   onStartChat: (userId: string) => void;
 }
-
-const getInitials = (name: string): string => {
-  return name
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-};
 
 export default function UserSearchItem({ user, onStartChat }: UserSearchItemProps) {
   const onlineUsers = useSelector((state: RootState) => state.chat.onlineUsers);

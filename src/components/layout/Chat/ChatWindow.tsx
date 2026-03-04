@@ -10,7 +10,9 @@ import MessageBubble from "./MessageBubble";
 import MessageInfoModal from "./MessageInfoModal";
 import ChatInput from "./ChatInput";
 import { ScrollArea } from "../../ui/scroll-area";
-import moment from "moment";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
 
 export default function ChatWindow() {
   const dispatch = useDispatch();
@@ -42,7 +44,7 @@ export default function ChatWindow() {
   const groupedMessages = useMemo(() => {
     const groups: { [key: string]: typeof messages } = {};
     messages.forEach(msg => {
-      const date = moment(msg.createdAt).format('YYYY-MM-DD');
+      const date = dayjs(msg.createdAt).format('YYYY-MM-DD');
       if (!groups[date]) groups[date] = [];
       groups[date].push(msg);
     });
@@ -50,12 +52,12 @@ export default function ChatWindow() {
   }, [messages]);
 
   const formatDateHeader = (date: string) => {
-    const today = moment().format('YYYY-MM-DD');
-    const yesterday = moment().subtract(1, 'day').format('YYYY-MM-DD');
+    const today = dayjs().format('YYYY-MM-DD');
+    const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
     
     if (date === today) return 'Today';
     if (date === yesterday) return 'Yesterday';
-    return moment(date).format('MMMM D, YYYY');
+    return dayjs(date).format('MMMM D, YYYY');
   };
 
   const prevConversationIdRef = useRef<string | null>(null);
@@ -126,9 +128,9 @@ export default function ChatWindow() {
 
   useLayoutEffect(() => {
     if (messages.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
     }
-  }, [messages]);
+  }, [messages.length]);
 
   if (!activeConversation) {
     return (
@@ -151,8 +153,8 @@ export default function ChatWindow() {
       <ScrollArea ref={scrollAreaRef} className="flex-1 h-0" onScrollCapture={handleScroll}>
         <div className="p-3 sm:p-4 min-h-full">
         {isLoadingMore && (
-          <div className="flex justify-center py-2">
-            <div className="text-xs text-muted-foreground">Loading...</div>
+          <div className="flex justify-center py-3">
+            <div className="h-4 w-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
           </div>
         )}
         {messages.length > 0 ? (
@@ -167,7 +169,8 @@ export default function ChatWindow() {
               {msgs.map((message) => (
                 <MessageBubble 
                   key={message._id} 
-                  message={message} 
+                  message={message}
+                  allMessages={messages}
                   onShowInfo={(msg) => {
                     setSelectedMessage(msg);
                     setShowMessageInfo(true);

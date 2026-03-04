@@ -1,13 +1,10 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { Instance } from "simple-peer";
 import type { User } from "../../types/entities";
 import type { CallStatus, IncomingCall } from "../../types/common";
 
 interface CallState {
   isCallActive: boolean;
   callStatus: CallStatus;
-  localStream: MediaStream | null;
-  remoteStream: MediaStream | null;
   incomingCall: IncomingCall | null;
   callerInfo: User | null;
   receiverInfo: User | null;
@@ -15,14 +12,11 @@ interface CallState {
   isAudioEnabled: boolean;
   isVideoEnabled: boolean;
   callId: string | null;
-  peer: Instance | null;
 }
 
 const initialState: CallState = {
   isCallActive: false,
   callStatus: "idle",
-  localStream: null,
-  remoteStream: null,
   incomingCall: null,
   callerInfo: null,
   receiverInfo: null,
@@ -30,7 +24,6 @@ const initialState: CallState = {
   isAudioEnabled: true,
   isVideoEnabled: true,
   callId: null,
-  peer: null,
 };
 
 const callSlice = createSlice({
@@ -83,20 +76,11 @@ const callSlice = createSlice({
       state.callStatus = "connected";
     },
     endCall: () => initialState,
-    setLocalStream: (state, action: PayloadAction<MediaStream | null>) => {
-      state.localStream = action.payload;
-    },
-    setRemoteStream: (state, action: PayloadAction<MediaStream | null>) => {
-      state.remoteStream = action.payload;
-    },
     toggleAudio: (state) => {
       state.isAudioEnabled = !state.isAudioEnabled;
     },
     toggleVideo: (state) => {
       state.isVideoEnabled = !state.isVideoEnabled;
-    },
-    setPeer: (state, action: PayloadAction<Instance | null>) => {
-      state.peer = action.payload;
     },
     setCallId: (state, action: PayloadAction<string | null>) => {
       state.callId = action.payload;
@@ -111,11 +95,8 @@ export const {
   acceptCall,
   connectCall,
   endCall,
-  setLocalStream,
-  setRemoteStream,
   toggleAudio,
   toggleVideo,
-  setPeer,
   setCallId,
 } = callSlice.actions;
 export default callSlice.reducer;

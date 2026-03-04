@@ -47,7 +47,7 @@ export const AttachmentRenderer = memo(({ attachment }: AttachmentRendererProps)
       href={attachment.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2 p-2 bg-background/50 rounded-lg hover:bg-background/70"
+      className="flex items-center gap-2 p-2 bg-accent rounded-lg hover:bg-accent/80 transition-colors"
     >
       <Download className="h-4 w-4" />
       <span className="text-sm truncate">{attachment.originalName || 'File'}</span>

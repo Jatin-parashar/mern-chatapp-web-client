@@ -27,7 +27,7 @@ export interface RefreshTokenRequest {
 }
 
 export interface AuthData {
-  user: User;
+  user: { _id: string; email: string };
   accessToken: string;
   refreshToken?: string;
 }

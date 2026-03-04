@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { User } from "../../types/entities";
 
-type UserState = Omit<User, 'email' | 'createdAt' | 'updatedAt'>;
+type UserState = Omit<User, 'createdAt' | 'updatedAt'>;
 
 const initialState: UserState = {
   _id: "",

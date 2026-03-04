@@ -1,7 +1,7 @@
 import "./App.css";
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 import { useSelector } from "react-redux";
-import { useEffect, lazy, Suspense } from "react";
+import { useEffect, useMemo, lazy, Suspense } from "react";
 import type { RootState } from "./app/store";
 import { SocketContextProvider } from "./socket/SocketContext";
 import { ThemeProvider } from "./components/theme/theme-provider";
@@ -25,7 +25,7 @@ function App() {
     }
   }, [accessToken]);
 
-  const router = createBrowserRouter([
+  const router = useMemo(() => createBrowserRouter([
     {
       path: "/",
       element: <Layout />,
@@ -68,7 +68,7 @@ function App() {
         },
       ],
     },
-  ]);
+  ]), [accessToken]);
 
   return (
     <ThemeProvider>

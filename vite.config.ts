@@ -33,6 +33,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router'],
+          'redux-vendor': ['@reduxjs/toolkit', 'react-redux', 'redux-persist'],
+          'socket-vendor': ['socket.io-client'],
           'emoji-picker': ['emoji-picker-react'],
           'peer': ['simple-peer'],
         },

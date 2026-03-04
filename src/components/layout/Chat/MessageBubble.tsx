@@ -14,10 +14,17 @@ interface MessageBubbleProps {
   message: Message;
   onShowInfo?: (message: Message) => void;
   onReply?: (message: Message) => void;
+  allMessages?: Message[];
 }
 
-const MessageBubble = memo(function MessageBubble({ message, onShowInfo, onReply }: MessageBubbleProps) {
+const MessageBubble = memo(function MessageBubble({ message, onShowInfo, onReply, allMessages }: MessageBubbleProps) {
   const currentUserId = useSelector((state: RootState) => state.user._id);
+
+  const repliedMessage = useMemo(() => {
+    if (!message.replyTo || !allMessages) return null;
+    const replyId = typeof message.replyTo === 'string' ? message.replyTo : (message.replyTo as any)._id;
+    return allMessages.find(m => m._id === replyId);
+  }, [message.replyTo, allMessages]);
 
   const { isOwnMessage, isSeen, isDelivered, hasAttachments } = useMemo(() => {
     const isOwn = message.sender._id === currentUserId;
@@ -42,10 +49,6 @@ const MessageBubble = memo(function MessageBubble({ message, onShowInfo, onReply
     
     return { isOwnMessage: true, isSeen: seen, isDelivered: delivered, hasAttachments: hasAttach };
   }, [message, currentUserId]);
-
-
-
-
 
   return (
     <div className={cn("flex gap-1.5 sm:gap-2 mb-3 sm:mb-4", isOwnMessage && "flex-row-reverse")}>
@@ -100,9 +103,55 @@ const MessageBubble = memo(function MessageBubble({ message, onShowInfo, onReply
                 : "bg-accent"
             )}
           >
-            {message.replyTo && (
-              <div className="mb-2 pb-2 border-b border-white/20">
-                <p className="text-xs opacity-70">Replying to message</p>
+            {repliedMessage && (
+              <div className={cn(
+                "mb-3 pl-3 pr-2.5 py-2 rounded-lg border-l-[3px] cursor-pointer hover:scale-[1.01] transition-transform",
+                isOwnMessage 
+                  ? "bg-white/15 border-white/50 backdrop-blur-sm" 
+                  : "bg-linear-to-r from-primary/8 to-primary/5 border-primary/50"
+              )}>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Reply className={cn(
+                    "h-3 w-3 shrink-0",
+                    isOwnMessage ? "text-white/70" : "text-primary/70"
+                  )} />
+                  <p className={cn(
+                    "text-xs font-bold tracking-tight",
+                    isOwnMessage ? "text-white" : "text-primary"
+                  )}>
+                    {repliedMessage.sender._id === currentUserId ? 'You' : repliedMessage.sender.name}
+                  </p>
+                </div>
+                
+                {repliedMessage.attachments && repliedMessage.attachments.length > 0 && (
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[10px]">📎</span>
+                    <span className={cn(
+                      "text-[11px] font-medium",
+                      isOwnMessage ? "text-white/75" : "text-muted-foreground"
+                    )}>
+                      {repliedMessage.attachments.length} attachment{repliedMessage.attachments.length > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                )}
+                
+                {repliedMessage.content && (
+                  <p className={cn(
+                    "text-xs line-clamp-2 break-words leading-relaxed",
+                    isOwnMessage ? "text-white/80" : "text-foreground/75"
+                  )}>
+                    {repliedMessage.content}
+                  </p>
+                )}
+                
+                {!repliedMessage.content && (!repliedMessage.attachments || repliedMessage.attachments.length === 0) && (
+                  <p className={cn(
+                    "text-xs italic",
+                    isOwnMessage ? "text-white/50" : "text-muted-foreground/50"
+                  )}>
+                    Original message
+                  </p>
+                )}
               </div>
             )}
             {hasAttachments && (

@@ -12,7 +12,7 @@ export const FILE_CONFIG = {
   },
   ALLOWED_TYPES: {
     IMAGE: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-    VIDEO: ['video/mp4', 'video/webm'],
+    VIDEO: ['video/mp4', 'video/webm', 'video/quicktime'],
     AUDIO: ['audio/mpeg', 'audio/wav', 'audio/ogg'],
     DOCUMENT: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
   },
